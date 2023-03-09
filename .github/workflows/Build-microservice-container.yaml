@@ -7,7 +7,7 @@ on:
         required: true
         type: string
       dockerfile_relative_path:
-        description: "Relative path to dockerfile being built (use '-f' docker argument if the dockerfile must be while in the root directory')."
+        description: "Relative path to dockerfile being built (use '-f' docker argument if the dockerfile referenced from the root directory)."
         required: true
         type: string
     secrets:
@@ -51,7 +51,7 @@ jobs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
 
-    - name: Build, tag, and push ${{ inputs.microservice_name }} image to Amazon ECR for dev
+    - name: Build, tag, and push ${{ inputs.microservice_name }} image to Amazon ECR
       id: build-image-develop
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
