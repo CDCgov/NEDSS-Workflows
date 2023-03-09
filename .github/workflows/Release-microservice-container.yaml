@@ -7,18 +7,18 @@ on:
         required: true
         type: string
       existing-image-tag:
-        description: 'Image tag of existing container in ECR (not used if build-new-container=true)'        
+        description: 'Image tag of existing container in ECR (not used if build-new-container=true).'        
         required: false
         type: string
       new-image-tag:
-        description: 'New image tag to be added to existing image'        
+        description: 'New image tag name.'        
         required: true
         type: string
       build-new-container:
-        description: '(true or false) Should a new container be built with new-image-tag. MUST BE LOWERCASE'
+        description: '(true or false) Should a new container be built with new-image-tag. MUST BE LOWERCASE.'
         required: true
-        default: "false"
-        type: string
+        default: false
+        type: boolean
       dockerfile_relative_path:
         description: "Relative path to dockerfile being built (use '-f' docker argument if the dockerfile referenced from the root directory)."
         required: false
@@ -60,7 +60,7 @@ jobs:
 
     - name: Add tag to existing ${{ inputs.microservice_name }} image in Amazon ECR
       id: tag-existing-image
-      if: ${{inputs.build-new-container}} == "false"
+      if: '${{inputs.build-new-container == false}}'
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: ${{ secrets.ECR_REPO_BASE_NAME }}/${{ inputs.microservice_name }}
@@ -72,7 +72,7 @@ jobs:
     
     - name: Build, tag, and push ${{ inputs.microservice_name }} image to Amazon ECR
       id: build-image
-      if: ${{inputs.build-new-container}} == "true"
+      if: '${{inputs.build-new-container == true}}'
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: ${{ secrets.ECR_REPO_BASE_NAME }}/${{ inputs.microservice_name }}
