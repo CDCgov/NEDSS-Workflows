@@ -70,6 +70,10 @@ jobs:
 
         aws ecr put-image --repository-name "$ECR_REPOSITORY" --image-tag "${{inputs.new-image-tag}}" --image-manifest "$MANIFEST"
     
+    - name: Checkout
+      if: '${{inputs.build-new-container == true}}'
+      uses: actions/checkout@v3
+
     - name: Build, tag, and push ${{ inputs.microservice_name }} image to Amazon ECR
       id: build-image
       if: '${{inputs.build-new-container == true}}'
