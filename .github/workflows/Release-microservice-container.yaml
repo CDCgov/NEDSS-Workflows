@@ -1,21 +1,35 @@
 name: Tag Existing Ansible image in ECR
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
-      existing-image-tag:
-        description: 'Image tag of existing container in ECR'        
+      microservice_name:
+        description: "Name of microservice corresponding to a container in ECR."
         required: true
         type: string
-      additional-image-tag:
+      existing-image-tag:
+        description: 'Image tag of existing container in ECR (not used if build-new-container=true)'        
+        required: false
+        type: string
+      new-image-tag:
         description: 'New image tag to be added to existing image'        
         required: true
         type: string
- 
-# Microservice name must correspond to an existing ECR          
-env:
-  microservice_name: ansible
-  dockerfile_relative_path: ./ansible
-  accountid: ${{secrets.cdc_nbs_sandbox_shared_services_accountid}}
+      build-new-container:
+        description: '(true or false) Should a new container be built with new-image-tag'
+        required: true
+        default: false
+        type: boolean
+      dockerfile_relative_path:
+        description: "Relative path to dockerfile being built (use '-f' docker argument if the dockerfile referenced from the root directory)."
+        required: false
+        type: string
+    secrets:
+      CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID:
+        description: "Secret named CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID where ECR resides."
+        required: true
+      ECR_REPO_BASE_NAME:
+        description: "Secret named ECR_REPO_BASE_NAME describing the ECR base path name."
+        required: true
 
 jobs:
   deploy:
@@ -36,7 +50,7 @@ jobs:
     - name: Configure AWS credentials from Test account
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        role-to-assume: "arn:aws:iam::${{ env.accountid }}:role/cdc-github-${{ env.github_repo_name }}-dev-role"
+        role-to-assume: "arn:aws:iam::${{ secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID }}:role/cdc-github-${{ env.github_repo_name }}-dev-role"
         role-session-name: tag-containers
         aws-region: us-east-1
 
@@ -44,13 +58,28 @@ jobs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
 
-    - name: Add tag to existing ${{ env.microservice_name }} image in Amazon ECR
+    - name: Add tag to existing ${{ inputs.microservice_name }} image in Amazon ECR
       id: build-image-develop
+      if: ${{inputs.build-new-container}} == false
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ secrets.ECR_REPO_BASE_NAME }}/${{ env.microservice_name }}
+        ECR_REPOSITORY: ${{ secrets.ECR_REPO_BASE_NAME }}/${{ inputs.microservice_name }}
       run: |
         # Tag existing docker container in ECR 
         MANIFEST=$(aws ecr batch-get-image --repository-name "$ECR_REPOSITORY" --image-ids imageTag="${{inputs.existing-image-tag}}" --output json | jq --raw-output --join-output '.images[0].imageManifest')
 
-        aws ecr put-image --repository-name "$ECR_REPOSITORY" --image-tag "${{inputs.additional-image-tag}}" --image-manifest "$MANIFEST"
+        aws ecr put-image --repository-name "$ECR_REPOSITORY" --image-tag "${{inputs.new-image-tag}}" --image-manifest "$MANIFEST"
+    
+    - name: Build, tag, and push ${{ inputs.microservice_name }} image to Amazon ECR
+      id: build-image-develop
+      if: ${{inputs.build-new-container}} == true
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ secrets.ECR_REPO_BASE_NAME }}/${{ inputs.microservice_name }}
+        IMAGE_TAG: "${{ inputs.new-image-tag }}"
+      run: |
+        # Build a docker container and push it to ECR 
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ${{ inputs.dockerfile_relative_path}}
+        echo "Pushing image to ECR..."
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
