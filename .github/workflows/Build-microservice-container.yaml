@@ -40,7 +40,7 @@ jobs:
         echo "github_repo_name=$github_repo_name" >> $GITHUB_ENV
 
 
-    - name: Configure AWS credentials from Test account
+    - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
         role-to-assume: "arn:aws:iam::${{ secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID }}:role/cdc-github-${{ env.github_repo_name }}-dev-role"
@@ -52,7 +52,7 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v1
 
     - name: Build, tag, and push ${{ inputs.microservice_name }} image to Amazon ECR
-      id: build-image-develop
+      id: build-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: ${{ secrets.ECR_REPO_BASE_NAME }}/${{ inputs.microservice_name }}

@@ -47,7 +47,7 @@ jobs:
         github_repo_name="$(echo $GITHUB_REPOSITORY | cut -d'/' -f2)"  
         echo "github_repo_name=$github_repo_name" >> $GITHUB_ENV
 
-    - name: Configure AWS credentials from Test account
+    - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
         role-to-assume: "arn:aws:iam::${{ secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID }}:role/cdc-github-${{ env.github_repo_name }}-dev-role"
@@ -59,7 +59,7 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v1
 
     - name: Add tag to existing ${{ inputs.microservice_name }} image in Amazon ECR
-      id: build-image-develop
+      id: tag-existing-image
       if: ${{inputs.build-new-container}} == false
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -71,7 +71,7 @@ jobs:
         aws ecr put-image --repository-name "$ECR_REPOSITORY" --image-tag "${{inputs.new-image-tag}}" --image-manifest "$MANIFEST"
     
     - name: Build, tag, and push ${{ inputs.microservice_name }} image to Amazon ECR
-      id: build-image-develop
+      id: build-image
       if: ${{inputs.build-new-container}} == true
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
