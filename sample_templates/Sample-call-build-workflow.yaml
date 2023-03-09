@@ -1,0 +1,21 @@
+# This is a sample template for calling a reusable workflow from NEDSS-Workflows public repository (Build-microservice-container.yaml)
+# Whenever a tag is added to the default (main) branch containing SNAPSHOT, the workflow is executed to build and store a container
+#
+# Manual variable edits.
+# Edit <microservice_name> AND <dockerfile_relative_path> to correctly identify your microservice and dockerfile path
+#   
+name: Build and Push <microservice_name>
+on:
+  push:
+    tags:
+      - '*SNAPSHOT*'
+     
+jobs:
+  call-build-microservice-container-workflow:
+    uses: CDCgov/NEDSS-Workflows/.github/workflows/Build-microservice-container.yaml@main
+    with:
+      microservice_name: <microservice_name>
+      dockerfile_relative_path: <dockerfile_relative_path>
+    secrets:
+      CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID: ${{secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID}}
+      ECR_REPO_BASE_NAME: ${{secrets.ECR_REPO_BASE_NAME}}

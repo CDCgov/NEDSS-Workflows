@@ -1,0 +1,38 @@
+# This is a sample template for calling a reusable workflow from NEDSS-Workflows public repository (Release-microservice-container.yaml)
+# Manually trigger a build on your branch of choice
+# The workflow either tags an existing container (typically for promotion to higher environments) or builds and stores a new container
+#
+# Manual variable edits.
+# Edit <microservice_name> AND <dockerfile_relative_path> to correctly identify your microservice and dockerfile path
+#   
+name: Release <microservice_name> package
+on:
+  workflow_dispatch:
+    inputs:      
+      existing-image-tag:
+        description: 'Image tag of existing container in ECR (not used if build-new-container=true).'        
+        required: false
+        type: string
+      new-image-tag:
+        description: 'New image tag name.'        
+        required: true
+        type: string
+      build-new-container:
+        description: 'Check the box to create a new container tagged with new-image-tag.'
+        required: true
+        default: false
+        type: boolean
+
+# Edit <microservice_name> AND <dockerfile_relative_path> to correctly identify your microservice and dockerfile path      
+jobs:
+  call-release-microservice-container-workflow:
+    uses: CDCgov/NEDSS-Workflows/.github/workflows/Release-microservice-container.yaml@main
+    with:
+      microservice_name: <microservice_name>
+      dockerfile_relative_path: <dockerfile_relative_path>
+      existing-image-tag: ${{inputs.existing-image-tag}}
+      new-image-tag: ${{inputs.new-image-tag}}
+      build-new-container: ${{inputs.build-new-container}}      
+    secrets:
+      CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID: ${{secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID}}
+      ECR_REPO_BASE_NAME: ${{secrets.ECR_REPO_BASE_NAME}}
