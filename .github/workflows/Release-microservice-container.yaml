@@ -60,7 +60,7 @@ jobs:
 
     - name: Add tag to existing ${{ inputs.microservice_name }} image in Amazon ECR
       id: tag-existing-image
-      !if: ${{inputs.build-new-container}}
+      if: ${{inputs.build-new-container}} != true
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: ${{ secrets.ECR_REPO_BASE_NAME }}/${{ inputs.microservice_name }}
