@@ -8,7 +8,9 @@ This repository is a central location for managing reusable workflows to be used
 
 ## Workflows
 There are 2 workflows currently provided.
-- Build-microservice-container.yaml - is intended to be triggered automatically whenever a specific tag is created. Results in a container being built and deployed to an AWS ECR. That container will be tagged identically with the tag created in the GitHub repository.
+- Build-microservice-container.yaml - is intended to be triggered automatically whenever a specific tag is created. Results in a container being built and deployed to an AWS ECR. That container will be tagged identically with the tag created in the GitHub repository.Sample git cli commands to create a tag where aaa12342 corresponds to the GitHub commit SHA:
+  - `git tag 0.0.2-SNAPSHOT.aaa12342 aaa12342`
+  - `git push --tags`
 - Build-microservice-container.yaml - is intended to be triggered manually. Can result in either:
   - An existing container image in AWS ECR will be tagged with a new specified tag.
   - OR a new image is created with the specified tag.
