@@ -1,0 +1,17 @@
+name: Update helm chart with new container
+on:
+  workflow_call:
+    inputs:
+      values_file:
+        description: "Name of microservice corresponding to a container in ECR."
+        required: true
+        type: string
+      values_file_path:
+        description: "Relative path to dockerfile being built (use '-f' docker argument if the dockerfile referenced from the root directory)."
+        required: true
+        type: string
+
+
+# If update occurs from the trunk (main branch only), directly push otherwise create a PR
+jobs:
+  update-helm-chart:
