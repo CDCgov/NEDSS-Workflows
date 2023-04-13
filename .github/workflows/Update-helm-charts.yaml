@@ -2,16 +2,53 @@ name: Update helm chart with new container
 on:
   workflow_call:
     inputs:
-      values_file:
-        description: "Name of microservice corresponding to a container in ECR."
+      values_file_with_path:
+        description: "Relative path Helm chart values file, including the file itself (Ex. elasticsearch/values-dev.yaml)"
         required: true
         type: string
-      values_file_path:
-        description: "Relative path to dockerfile being built (use '-f' docker argument if the dockerfile referenced from the root directory)."
+      new_image_tag:
+        description: "Image tag to add to helm chart"
         required: true
         type: string
 
+env: 
+  ran_push_to_main: "false"
 
 # If update occurs from the trunk (main branch only), directly push otherwise create a PR
-jobs:
+# Only allows calls from within CDCgov organization
+jobs:  
   update-helm-chart:
+    if: startsWith( github.repository, 'CDCgov' )
+    steps:
+    - name: Checkout helm repository
+      uses: actions/checkout@v3
+        with:
+          repository: CDCgov/NEDSS-Helm
+
+    - name: Modify helm chart image
+      run: |
+        awk -v NEW_TAG="${{ inputs.new_image_tag}}" '/^ *image:/ {p=1} p && /^ *tag:/ {sub(/:.*/, ": "NEW_TAG); p=0} {print}' ${{ inputs.values_file_with_path}} > newfile.yaml; mv newfile.yaml ${{ inputs.values_file_with_path}}
+
+    # If request is coming from the main trunk or is intended for dev environment
+    - name: Commit and push changes to helm repository directly to main
+      if: endsWith( github.ref, 'main') || contains(github.ref, 'SNAPSHOT')
+        run: |
+          git config --global user.name "eq-cdc-nbs-github-svc"
+          git config --global user.email "cdc-nbs-github-service-acc@enquizit.com"
+
+          git add -A
+          git commit -m "updating helm chart ${{ inputs.values_file_with_path}} with image tag ${{ inputs.new_image_tag}}"
+          git push
+
+          echo "ran_push_to_main=true" >> $GITHUB_ENV
+
+    #  # If request is NOT coming from the main trunk AND is NOT intended for dev environment
+    # - name: Commit and push changes to helm repository directly to main
+    #   if: ${{ env.ran_push_to_main != "true" }}
+    #     run: |
+    #       git config --global user.name "eq-cdc-nbs-github-svc"
+    #       git config --global user.email "cdc-nbs-github-service-acc@enquizit.com"
+
+    #       git add -A
+    #       git commit -m "updating helm chart ${{inputs.values_file}}"
+    #       git push
