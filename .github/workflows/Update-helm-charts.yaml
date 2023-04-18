@@ -29,8 +29,8 @@ jobs:
     steps:
     - name: Checkout helm repository
       uses: actions/checkout@v3
-        with:
-          repository: CDCgov/NEDSS-Helm
+      with:
+        repository: CDCgov/NEDSS-Helm
 
     - name: Modify helm chart image
       run: |
