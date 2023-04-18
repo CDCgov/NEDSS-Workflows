@@ -87,12 +87,10 @@ jobs:
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
   update-helm:
-    needs: build
-    call-update-helm-charts-workflow:
-    - name: Update Helm Charts  
-      uses: CDCgov/NEDSS-Workflows/.github/workflows/Update-helm-charts.yaml
-      with:
-        values_file_with_path: ${{ inputs.values_file_with_path }}
-        new_image_tag: ${{ env.new_image_tag }}
-        GIT_USER_EMAIL: ${{ secrets.GIT_USER_EMAIL }}
-        GIT_USER_NAME: ${{ secrets.GIT_USER_NAME }}
+    needs: build    
+    uses: CDCgov/NEDSS-Workflows/.github/workflows/Update-helm-charts.yaml
+    with:
+      values_file_with_path: ${{ inputs.values_file_with_path }}
+      new_image_tag: ${{ env.new_image_tag }}
+      GIT_USER_EMAIL: ${{ secrets.GIT_USER_EMAIL }}
+      GIT_USER_NAME: ${{ secrets.GIT_USER_NAME }}
