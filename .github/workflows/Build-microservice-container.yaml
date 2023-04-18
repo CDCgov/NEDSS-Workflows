@@ -89,7 +89,7 @@ jobs:
   update-helm:
     needs: build    
     call-update-helm-charts-workflow:
-      uses: CDCgov/NEDSS-Workflows/.github/workflows/Update-helm-charts.yaml@main
+      uses: CDCgov/NEDSS-Workflows/.github/workflows/Update-helm-charts.yaml@CNPT-1071-create-workflow-to-update-helm
       with:
         values_file_with_path: ${{ inputs.values_file_with_path }}
         new_image_tag: ${{ env.new_image_tag }}
