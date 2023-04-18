@@ -88,7 +88,7 @@ jobs:
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
   update-helm:
     needs: build    
-    uses: CDCgov/NEDSS-Workflows/.github/workflows/Update-helm-charts.yaml
+    uses: CDCgov/NEDSS-Workflows/.github/workflows/Update-helm-charts.yaml@main
     with:
       values_file_with_path: ${{ inputs.values_file_with_path }}
       new_image_tag: ${{ env.new_image_tag }}
