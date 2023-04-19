@@ -41,7 +41,8 @@ jobs:
 
     - name: Modify helm chart image
       run: |
-        awk -v NEW_TAG="${{ inputs.new_image_tag}}" '/^ *image:/ {p=1} p && /^ *tag:/ {sub(/:.*/, ": "NEW_TAG); p=0} {print}' ${{ inputs.values_file_with_path}} > newfile.yaml; mv newfile.yaml ${{ inputs.values_file_with_path}}
+        awk -v NEW_TAG="${{ inputs.new_image_tag}}" '/^ *image:/ {p=1} p && /^ *tag:/ {sub(/:.*/, ": "NEW_TAG); p=0} {print}' ${{ inputs.values_file_with_path}} > newfile.yaml
+        mv newfile.yaml ${{ inputs.values_file_with_path}}
 
     # If request is coming from the main trunk or is intended for dev environment
     - name: Commit and push changes to helm repository directly to main
