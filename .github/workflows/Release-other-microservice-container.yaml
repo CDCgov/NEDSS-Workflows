@@ -10,12 +10,8 @@ on:
         description: 'Image tag of existing container in ECR (not used if build-new-container=true).'        
         required: false
         type: string
-      new-image-tag:
-        description: 'New image tag name.'        
-        required: true
-        type: string
       build-new-container:
-        description: '(true or false) Should a new container be built with new-image-tag. MUST BE LOWERCASE.'
+        description: '(true or false) Should a new container be built. MUST BE LOWERCASE.'
         required: true
         default: false
         type: boolean
@@ -23,12 +19,31 @@ on:
         description: "Relative path to dockerfile being built (use '-f' docker argument if the dockerfile referenced from the root directory)."
         required: false
         type: string
+      environment_classifier:
+        description: Metadata to append to application version (A setting of NONE, indicates all metadata to be stripped). Ex. if version=1.0.0, and environment_classifier=SNAPSHOT result will be 1.0.0-SNAPSHOT.<githubsha>. If version=1.0.0, and environment_classifier=NONE result will be 1.0.0.
+        required: true
+        type: string
+      update_helm_chart:
+        description: (true or false) Should the image tag be updated within the Helm chart? If true, specify a value for values_file_with_path. Default=false.
+        required: true
+        type: boolean
+        default: false
+      values_file_with_path:
+        description: What is the path to the helm chart in NBS helm chart repository? (ex. charts/elasticsearch)
+        type: string
+        default: ""       
     secrets:
       CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID:
         description: "Secret named CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID where ECR resides."
         required: true
       ECR_REPO_BASE_NAME:
         description: "Secret named ECR_REPO_BASE_NAME describing the ECR base path name."
+        required: true
+      GIT_USER_EMAIL:
+        description: "Secret named GIT_USER_EMAIL for the CI user email."
+        required: true
+      GIT_USER_NAME:
+        description: "Secret named ECR_REPO_BASE_NAME for the CI user name."
         required: true
 
 jobs:
@@ -46,6 +61,22 @@ jobs:
       run: |   
         github_repo_name="$(echo $GITHUB_REPOSITORY | cut -d'/' -f2)"  
         echo "github_repo_name=$github_repo_name" >> $GITHUB_ENV
+
+    # Create an image tag with metadata
+    - name: (Other) Create microservice version tag from dockerfile image name
+      if: ${{ inputs.update_helm_chart != "NONE" }}
+      run: |
+        app_version=$(grep ^FROM ${{ inputs.dockerfile_relative_path }}/dockerfile | head -1 | awk -F':' '{print $2}' | awk '{print $1}')
+        new_image_tag=$app_version-${{inputs.environment_classifier}}.${{env.github_sha_short}}
+        echo "new_image_tag=$new_image_tag" >> $GITHUB_ENV
+    
+    # Create an image tag with no metadata
+    - name: (Other) Create microservice version tag from dockerfile image name
+      if: ${{ inputs.update_helm_chart == "NONE" }}
+      run: |
+        app_version=$(grep ^FROM ${{ inputs.dockerfile_relative_path }}/dockerfile | head -1 | awk -F':' '{print $2}' | awk '{print $1}')
+        new_image_tag=$app_version
+        echo "new_image_tag=$new_image_tag" >> $GITHUB_ENV
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -68,7 +99,7 @@ jobs:
         # Tag existing docker container in ECR 
         MANIFEST=$(aws ecr batch-get-image --repository-name "$ECR_REPOSITORY" --image-ids imageTag="${{inputs.existing-image-tag}}" --output json | jq --raw-output --join-output '.images[0].imageManifest')
 
-        aws ecr put-image --repository-name "$ECR_REPOSITORY" --image-tag "${{inputs.new-image-tag}}" --image-manifest "$MANIFEST"
+        aws ecr put-image --repository-name "$ECR_REPOSITORY" --image-tag "${{env.new-image-tag}}" --image-manifest "$MANIFEST"
     
     - name: Checkout
       if: '${{inputs.build-new-container == true}}'
@@ -80,10 +111,20 @@ jobs:
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: ${{ secrets.ECR_REPO_BASE_NAME }}/${{ inputs.microservice_name }}
-        IMAGE_TAG: "${{ inputs.new-image-tag }}"
+        IMAGE_TAG: "${{ env.new-image-tag }}"
       run: |
         # Build a docker container and push it to ECR 
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ${{inputs.dockerfile_relative_path}}
         echo "Pushing image to ECR..."
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+  update-helm:
+    needs: build
+    if: ${{ inputs.update_helm_chart == true }}    
+    uses: CDCgov/NEDSS-Workflows/.github/workflows/Update-helm-charts.yaml@main
+    with:
+      values_file_with_path: ${{ inputs.values_file_with_path }}
+      new_image_tag: ${{ env.new_image_tag }}
+      microservice_name: ${{inputs.microservice_name}}
+      GIT_USER_EMAIL: ${{ secrets.GIT_USER_EMAIL }}
+      GIT_USER_NAME: ${{ secrets.GIT_USER_NAME }}
