@@ -35,9 +35,7 @@ jobs:
         repository: CDCgov/NEDSS-Helm
     
     - name: Set env variable
-      run: |
-      echo "ran_push_to_main=\"false\"" >> $GITHUB_ENV 
-      ran_push_to_main: "false"
+      run: echo "ran_push_to_main=\"false\"" >> $GITHUB_ENV     
 
     - name: Modify helm chart image
       run: |
