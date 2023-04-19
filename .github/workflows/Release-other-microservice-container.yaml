@@ -74,7 +74,7 @@ jobs:
     - name: (Other) Create microservice version tag from dockerfile image name
       if: ${{ inputs.update_helm_chart == "NONE" }}
       run: |
-        app_version=$(grep ^FROM ${{ inputs.dockerfile_relative_path }} | head -1 | awk -F':' '{print $2}' | awk '{print $1}')
+        app_version=$(grep ^FROM ${{ inputs.dockerfile_relative_path }}/dockerfile | head -1 | awk -F':' '{print $2}' | awk '{print $1}')
         new_image_tag=$app_version
         echo "new_image_tag=$new_image_tag" >> $GITHUB_ENV
 
