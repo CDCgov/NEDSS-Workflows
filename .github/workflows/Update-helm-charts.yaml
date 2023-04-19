@@ -28,6 +28,8 @@ on:
 jobs:  
   update-helm-chart:
     if: startsWith( github.repository, 'CDCgov' )
+    name: Update Helm Charts
+    runs-on: ubuntu-latest
     steps:
     - name: Checkout helm repository
       uses: actions/checkout@v3
