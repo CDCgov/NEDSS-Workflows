@@ -22,8 +22,6 @@ on:
         description: "Secret named ECR_REPO_BASE_NAME for the CI user name."
         required: true
 
-env: 
-  ran_push_to_main: "false"
 
 # If update occurs from the trunk (main branch only), directly push otherwise create a PR
 # Only allows calls from within CDCgov organization
@@ -35,6 +33,11 @@ jobs:
       uses: actions/checkout@v3
       with:
         repository: CDCgov/NEDSS-Helm
+    
+    - name: Set env variable
+      run: |
+      echo "ran_push_to_main=\"false\"" >> $GITHUB_ENV 
+      ran_push_to_main: "false"
 
     - name: Modify helm chart image
       run: |
