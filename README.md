@@ -20,6 +20,9 @@ Sample templates for calling these reuseable workflows can be found within [samp
 #### Template Changes
 1. `<microservice_name>` - this name should properly describe your microservice and must match the repository created in AWS ECR.
 2. `<dockerfile_relative_path>` - this is the path from the root of your GitHub repository to your dockerfile (not including the file itself). Example: ./microservice_directory
+3. `<environment_classifier>` - metadata you wish to add to the result container artifact (eg. SNAPSHOT, TEST, TEST2, DEMO).
+4. `<update_helm_chart>` - (true or false) Should the image tag be updated within the Helm chart?
+5. `<values_file_with_path>` - What is the path to the helm chart in NBS helm chart repository? (ex. charts/elasticsearch/values.yaml)
 
 #### Variables
 This workflow requires no additonal input variables.
@@ -27,18 +30,25 @@ This workflow requires no additonal input variables.
 #### Required GitHub Secrets
 1. `CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID` - account id for container storage.
 2. `ECR_REPO_BASE_NAME` - base name for ECR to store the container image.
+3. `GIT_USER_EMAIL` - Secret named GIT_USER_EMAIL for the CI user email.
+4. `GIT_USER_NAME` - Secret named ECR_REPO_BASE_NAME for the CI user name.
 
 ### Sample-call-release-workflow.yaml
 Template Changes
 1. `<microservice_name>` - this name should properly describe your microservice and must match the repository created in AWS ECR.
 2. `<dockerfile_relative_path>` - this is the path from the root of your GitHub repository to your dockerfile (not including the file itself). Example: ./microservice_directory
+3. `<environment_classifier>` - metadata you wish to add to the result container artifact (eg. SNAPSHOT, TEST, TEST2, DEMO).
+4. `<update_helm_chart>` - (true or false) Should the image tag be updated within the Helm chart?
+5. `<values_file_with_path>` - What is the path to the helm chart in NBS helm chart repository? (ex. charts/elasticsearch/values.yaml)
 
 #### Variables
 1. `existing-image-tag` - Image tag of existing container in ECR (not used if build-new-container=true).
-2. `new-image-tag` - New image tag name.
 3. `build-new-container` - Check the box to create a new container tagged with new-image-tag. 
    -(NOTE: this variable is rendered as a check-box when running manually.)
 
 #### Required GitHub Secrets
 1. `CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID` - account id for container storage.
 2. `ECR_REPO_BASE_NAME` - base name for ECR to store the container image.
+3. `GIT_USER_EMAIL` - Secret named GIT_USER_EMAIL for the CI user email.
+4. `GIT_USER_NAME` - Secret named ECR_REPO_BASE_NAME for the CI user name.
+

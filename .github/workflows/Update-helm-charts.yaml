@@ -10,6 +10,10 @@ on:
         description: "Image tag to add to helm chart"
         required: true
         type: string
+      microservice_name:
+        description: "Name of microservice corresponding to a container in ECR."
+        required: true
+        type: string
     secrets:
       GIT_USER_EMAIL:
         description: "Secret named GIT_USER_EMAIL for the CI user email."
@@ -47,15 +51,13 @@ jobs:
         git commit -m "updating helm chart ${{ inputs.values_file_with_path}} with image tag ${{ inputs.new_image_tag}}"
         git push
 
-        echo "ran_push_to_main=true" >> $GITHUB_ENV
+        echo "ran_push_to_main=\"true\"" >> $GITHUB_ENV
 
-    #  # If request is NOT coming from the main trunk AND is NOT intended for dev environment
-    # - name: Commit and push changes to helm repository directly to main
-    #   if: ${{ env.ran_push_to_main != "true" }}
-    #     run: |
-    #       git config --global user.name "eq-cdc-nbs-github-svc"
-    #       git config --global user.email "cdc-nbs-github-service-acc@enquizit.com"
+     # If request is NOT coming from the main trunk AND is NOT intended for dev environment
+    - name: Commit and push changes to helm repository directly to main
+      if: ${{ env.ran_push_to_main == "false" }}
+        run: |
+          git config --global user.name ${{ secrets.GIT_USER_NAME }}
+          git config --global user.email ${{ secrets.GIT_USER_NAME }}
 
-    #       git add -A
-    #       git commit -m "updating helm chart ${{inputs.values_file}}"
-    #       git push
+          gh pr create -B main -H helm-update-${{inputs.microservice_name}}-${{ inputs.new_image_tag}} --title 'Merge helm-update-${{inputs.microservice_name}}-${{ inputs.new_image_tag}} into main' --body 'Created by Github action'          

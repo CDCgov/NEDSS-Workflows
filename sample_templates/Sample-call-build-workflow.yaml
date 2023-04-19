@@ -1,14 +1,21 @@
 # This is a sample template for calling a reusable workflow from NEDSS-Workflows public repository (Build-microservice-container.yaml)
-# Whenever a tag is added to the default (main) branch containing SNAPSHOT, the workflow is executed to build and store a container
+# Whenever a push is made to the default (main) branch containing SNAPSHOT, the workflow is executed to build and store a container
+# optional paths (or paths-ignore) can be set if you want to limit what changes can trigger the pipeline
 #
 # Manual variable edits.
-# Edit <microservice_name> AND <dockerfile_relative_path> to correctly identify your microservice and dockerfile path
-#   
+# Edit:
+# 1. <microservice_name> 
+# 2. <dockerfile_relative_path> to correctly identify your microservice and dockerfile path
+# 3. <environment_classifier>
+# 4. <update_helm_chart>
+# 5. <values_file_with_path>
 name: Build and Push <microservice_name>
 on:
   push:
-    tags:
-      - '*SNAPSHOT*'
+    branches:
+      - 'main'
+  # paths:
+  #   - 'apps/**'
      
 jobs:
   call-build-microservice-container-workflow:
@@ -16,6 +23,11 @@ jobs:
     with:
       microservice_name: <microservice_name>
       dockerfile_relative_path: <dockerfile_relative_path>
+      environment_classifier: <environment_classifier>
+      update_helm_chart: <update_helm_chart>
+      values_file_with_path: <values_file_with_path>
     secrets:
       CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID: ${{secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID}}
       ECR_REPO_BASE_NAME: ${{secrets.ECR_REPO_BASE_NAME}}
+      GIT_USER_EMAIL: ${{secrets.GIT_USER_EMAIL}}
+      GIT_USER_NAME: ${{secrets.GIT_USER_NAME}}
