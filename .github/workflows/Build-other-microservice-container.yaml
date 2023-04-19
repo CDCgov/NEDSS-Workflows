@@ -72,7 +72,7 @@ jobs:
     - name: (Other) Create microservice version tag from dockerfile image name
       id: set-env-variables
       run: |
-        app_version=$(grep ^FROM ${{ inputs.dockerfile_relative_path }}/dockerfile | head -1 | awk -F':' '{print $2}' | awk '{print $1}')
+        app_version=$(grep ^FROM ${{ inputs.dockerfile_relative_path }}/Dockerfile | head -1 | awk -F':' '{print $2}' | awk '{print $1}')
         new_image_tag=$app_version-${{inputs.environment_classifier}}.${{env.github_sha_short}}
         echo "new_image_tag=$new_image_tag" >> $GITHUB_ENV
         echo "new_image_tag=$new_image_tag" >> $GITHUB_OUTPUTS
