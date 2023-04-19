@@ -56,8 +56,8 @@ jobs:
      # If request is NOT coming from the main trunk AND is NOT intended for dev environment
     - name: Commit and push changes to helm repository directly to main
       if: ${{ env.ran_push_to_main == "false" }}
-        run: |
-          git config --global user.name ${{ secrets.GIT_USER_NAME }}
-          git config --global user.email ${{ secrets.GIT_USER_NAME }}
+      run: |
+        git config --global user.name ${{ secrets.GIT_USER_NAME }}
+        git config --global user.email ${{ secrets.GIT_USER_NAME }}
 
-          gh pr create -B main -H helm-update-${{inputs.microservice_name}}-${{ inputs.new_image_tag}} --title 'Merge helm-update-${{inputs.microservice_name}}-${{ inputs.new_image_tag}} into main' --body 'Created by Github action'          
+        gh pr create -B main -H helm-update-${{inputs.microservice_name}}-${{ inputs.new_image_tag}} --title 'Merge helm-update-${{inputs.microservice_name}}-${{ inputs.new_image_tag}} into main' --body 'Created by Github action'          
