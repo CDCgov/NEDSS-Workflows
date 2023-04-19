@@ -42,7 +42,7 @@ jobs:
     name: Build and store container
     runs-on: ubuntu-latest
     outputs:
-      build-and-verify: ${{ steps.set-output-defaults.outputs.build }}
+      output-image-tag: ${{ steps.set-env-variables.outputs.new_image_tag }}
     # These permissions are needed to interact with GitHub's OIDC Token endpoint.
     # New comment
     permissions:
@@ -70,9 +70,10 @@ jobs:
         echo "github_repo_name=$github_repo_name" >> $GITHUB_ENV        
 
     - name: (Other) Create microservice version tag from dockerfile image name
+      id: set-env-variables
       run: |
         app_version=$(grep ^FROM ${{ inputs.dockerfile_relative_path }}/dockerfile | head -1 | awk -F':' '{print $2}' | awk '{print $1}')
-        new_image_tag=$app_version${{inputs.environment_classifier}}.${{env.github_sha_short}}
+        new_image_tag=$app_version-${{inputs.environment_classifier}}.${{env.github_sha_short}}
         echo "new_image_tag=$new_image_tag" >> $GITHUB_ENV
         echo "new_image_tag=$new_image_tag" >> $GITHUB_OUTPUTS
 
