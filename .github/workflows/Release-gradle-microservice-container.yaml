@@ -48,6 +48,13 @@ on:
       HELM_TOKEN:
         description: "Secret named HELM_TOKEN to access helm chart repository"
         required: true
+    outputs:
+      output_image_tag:
+        description: "Container image tag" 
+        value: ${{ jobs.build.outputs.output_image_tag }}
+      output_image_tag_release:
+        description: "Container image tag" 
+        value: ${{ jobs.build.outputs.output_image_tag_release }}
 
 jobs:
   deploy:

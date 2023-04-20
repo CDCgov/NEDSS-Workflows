@@ -50,8 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       output_image_tag: ${{ steps.set-env-variables.outputs.output_image_tag }}
-    # outputs:
-    #   output-image-tag: ${{ steps.set-env-variables.outputs.new_image_tag }}
+
     # These permissions are needed to interact with GitHub's OIDC Token endpoint.
     # New comment
     permissions:
