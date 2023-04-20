@@ -75,6 +75,7 @@ jobs:
         app_version=$(./gradlew printVersion -PversionClassifier=${{inputs.environment_classifier}} | grep "Version:" | awk '{print $2}')
         new_image_tag=$app_version.${{env.github_sha_short}}
         echo "new_image_tag=$new_image_tag" >> $GITHUB_ENV
+        echo "new_image_tag=$new_image_tag" >> $GITHUB_OUTPUT
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -99,13 +100,13 @@ jobs:
         echo "Pushing image to ECR..."
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-  update-helm:
-    needs: build
-    if: ${{ inputs.update_helm_chart == true }}    
-    uses: CDCgov/NEDSS-Workflows/.github/workflows/Update-helm-charts.yaml@main
-    with:
-      values_file_with_path: ${{ inputs.values_file_with_path }}
-      new_image_tag: ${{ env.new_image_tag }}
-      microservice_name: ${{inputs.microservice_name}}
-      GIT_USER_EMAIL: ${{ secrets.GIT_USER_EMAIL }}
-      GIT_USER_NAME: ${{ secrets.GIT_USER_NAME }}
+  # update-helm:
+  #   needs: build
+  #   if: ${{ inputs.update_helm_chart == true }}    
+  #   uses: CDCgov/NEDSS-Workflows/.github/workflows/Update-helm-charts.yaml@main
+  #   with:
+  #     values_file_with_path: ${{ inputs.values_file_with_path }}
+  #     new_image_tag: ${{ env.new_image_tag }}
+  #     microservice_name: ${{inputs.microservice_name}}
+  #     GIT_USER_EMAIL: ${{ secrets.GIT_USER_EMAIL }}
+  #     GIT_USER_NAME: ${{ secrets.GIT_USER_NAME }}
