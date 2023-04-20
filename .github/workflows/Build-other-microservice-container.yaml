@@ -44,6 +44,8 @@ jobs:
   build:
     name: Build and store container
     runs-on: ubuntu-latest
+    outputs:
+      new_image_tag: ${{ steps.set-env-variables.outputs.new_image_tag }}
     # outputs:
     #   output-image-tag: ${{ steps.set-env-variables.outputs.new_image_tag }}
     # These permissions are needed to interact with GitHub's OIDC Token endpoint.

@@ -53,6 +53,9 @@ jobs:
   deploy:
     name: Tag container for upper environment
     runs-on: ubuntu-latest
+    outputs:
+      new_image_tag: ${{ steps.set-env-variables.outputs.new_image_tag }}
+      new_image_release: ${{ steps.set-env-variables-clean.outputs.new_image_tag }}
     # These permissions are needed to interact with GitHub's OIDC Token endpoint.
     # New comment
     permissions:
@@ -67,6 +70,7 @@ jobs:
 
     # Create an image tag with metadata
     - name: (Gradle) Create microservice version tag with metadata
+      id: set-env-variables
       if: ${{ inputs.update_helm_chart != "NONE" }}
       run: |
         app_version=$(./gradlew printVersion -PversionClassifier=${{inputs.environment_classifier}} | grep "Version:" | awk '{print $2}')
@@ -76,6 +80,7 @@ jobs:
     
     # Create an image tag with no metadata
     - name: (Gradle) Create microservice version tag with metadata
+      id: set-env-variables-clean
       if: ${{ inputs.update_helm_chart == "NONE" }}
       run: |
         app_version=$(./gradlew printVersion -Psnapshot=false | grep "Version:" | awk '{print $2}')

@@ -44,6 +44,8 @@ jobs:
   build:
     name: Build and store container
     runs-on: ubuntu-latest
+    outputs:
+      new_image_tag: ${{ steps.set-env-variables.outputs.new_image_tag }}
     # These permissions are needed to interact with GitHub's OIDC Token endpoint.
     # New comment
     permissions:
@@ -71,6 +73,7 @@ jobs:
         echo "github_repo_name=$github_repo_name" >> $GITHUB_ENV        
 
     - name: (Gradle) Create microservice version tag
+      id: set-env-variables
       run: |
         app_version=$(./gradlew printVersion -PversionClassifier=${{inputs.environment_classifier}} | grep "Version:" | awk '{print $2}')
         new_image_tag=$app_version.${{env.github_sha_short}}
