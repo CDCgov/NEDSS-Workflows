@@ -56,7 +56,7 @@ jobs:
 
     # If request is coming from the main trunk or is intended for dev environment
     - name: Commit and push changes to helm repository directly to main
-      if: ${{ endsWith( github.ref, 'main') == true || contains(${{ inputs.new_image_tag}}, 'SNAPSHOT') == true }}
+      if: ${{ endsWith( github.ref, 'main') == true || contains(inputs.new_image_tag, 'SNAPSHOT') == true }}
       run: |
         echo ${{github.ref}}
         echo ${{ inputs.new_image_tag}}   
