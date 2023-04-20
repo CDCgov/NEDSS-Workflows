@@ -15,6 +15,12 @@ on:
         required: true
         type: string
     secrets:
+      GIT_USER_EMAIL:
+        description: "Secret named GIT_USER_EMAIL for the CI user email."
+        required: true
+      GIT_USER_NAME:
+        description: "Secret named ECR_REPO_BASE_NAME for the CI user name."
+        required: true
       HELM_TOKEN:
         description: "Secret named HELM_TOKEN to access helm chart repository"
         required: true
