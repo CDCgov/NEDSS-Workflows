@@ -33,6 +33,12 @@ jobs:
     if: startsWith( github.repository, 'CDCgov' )
     name: Update Helm Charts
     runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: write
+      pull-requests: write
+      
     steps:
     - name: Checkout helm repository
       uses: actions/checkout@v3
