@@ -54,8 +54,8 @@ jobs:
     name: Tag container for upper environment
     runs-on: ubuntu-latest
     outputs:
-      new_image_tag: ${{ steps.set-env-variables.outputs.new_image_tag }}
-      new_image_release: ${{ steps.set-env-variables-clean.outputs.new_image_tag }}
+      output_image_tag: ${{ steps.set-env-variables.outputs.new_image_tag }}
+      output_image_release: ${{ steps.set-env-variables-clean.outputs.new_image_tag }}
     # These permissions are needed to interact with GitHub's OIDC Token endpoint.
     # New comment
     permissions:
