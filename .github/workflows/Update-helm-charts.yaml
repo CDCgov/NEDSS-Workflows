@@ -65,13 +65,18 @@ jobs:
         git remote set-url origin https://x-access-token:${{ secrets.HELM_TOKEN }}@github.com/CDCgov/NEDSS-Helm.git
         git add -A
         git commit -m "updating helm chart ${{ inputs.values_file_with_path}} with image tag ${{ inputs.new_image_tag}}"
-        git push
+        git push origin main --force
         echo "ran_push_to_main=true" >> $GITHUB_ENV
 
      # If request is NOT coming from the main trunk AND is NOT intended for dev environment
     - name: Commit and pull request to helm repository into main
       if: ${{ contains(env.ran_push_to_main, true) == false }}
       run: |
+        git checkout -b helm-update-${{inputs.microservice_name}}-${{ inputs.new_image_tag}}
+        git add -A
+        git commit -m "updating helm chart ${{ inputs.values_file_with_path}} with image tag ${{ inputs.new_image_tag}}"
+        git push --set-upstream origin helm-update-${{inputs.microservice_name}}-${{ inputs.new_image_tag}}
+
         gh pr create -B main -H helm-update-${{inputs.microservice_name}}-${{ inputs.new_image_tag}} --title 'Merge helm-update-${{inputs.microservice_name}}-${{ inputs.new_image_tag}} into main' --body 'Created by Github action in ${{github.ref}}'
       env:
         GITHUB_TOKEN: ${{secrets.HELM_TOKEN}}
