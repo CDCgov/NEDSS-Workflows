@@ -37,20 +37,31 @@ on:
         type: string
         default: "" 
 
-# Edit <microservice_name> AND <dockerfile_relative_path> to correctly identify your microservice and dockerfile path      
 jobs:
-  call-release-microservice-container-workflow:
-    uses: CDCgov/NEDSS-Workflows/.github/workflows/Release-microservice-container.yaml@main
+  call-build-microservice-container-workflow:
+    uses: CDCgov/NEDSS-Workflows/.github/workflows/Build-other-microservice-container.yaml@main
     with:
       microservice_name: <microservice_name>
       dockerfile_relative_path: <dockerfile_relative_path>
       existing-image-tag: ${{inputs.existing-image-tag}}
       build-new-container: ${{inputs.build-new-container}}
-      environment_classifier: <environment_classifier>
-      update_helm_chart: <update_helm_chart>
-      values_file_with_path: <values_file_with_path>   
+      environment_classifier: ${{inputs.environment_classifier}}
+      update_helm_chart: ${{inputs.update_helm_chart}}
+      values_file_with_path: ${{inputs.values_file_with_path}}
     secrets:
       CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID: ${{secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID}}
       ECR_REPO_BASE_NAME: ${{secrets.ECR_REPO_BASE_NAME}}
       GIT_USER_EMAIL: ${{secrets.GIT_USER_EMAIL}}
       GIT_USER_NAME: ${{secrets.GIT_USER_NAME}}
+      HELM_TOKEN: ${{secrets.HELM_TOKEN}}      
+  call-update-helm:
+    needs: call-build-microservice-container-workflow    
+    uses: CDCgov/NEDSS-Workflows/.github/workflows/Update-helm-charts.yaml@main
+    with:
+      microservice_name: <microservice_name>
+      values_file_with_path: ${{inputs.values_file_with_path}}
+      new_image_tag: ${{ needs.call-build-microservice-container-workflow.outputs.output_image_tag }}      
+    secrets:
+      GIT_USER_EMAIL: ${{secrets.GIT_USER_EMAIL}}
+      GIT_USER_NAME: ${{secrets.GIT_USER_NAME}}
+      HELM_TOKEN: ${{secrets.HELM_TOKEN}}
