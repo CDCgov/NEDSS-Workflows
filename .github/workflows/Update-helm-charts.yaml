@@ -58,8 +58,6 @@ jobs:
     - name: Commit and push changes to helm repository directly to main
       if: ${{ endsWith( github.ref, 'main') == true || contains(inputs.new_image_tag, 'SNAPSHOT') == true }}
       run: |
-        echo ${{github.ref}}
-        echo ${{ inputs.new_image_tag}}   
         git config --global user.name ${{ secrets.GIT_USER_NAME }}
         git config --global user.email  ${{ secrets.GIT_USER_EMAIL }}
         git remote set-url origin https://x-access-token:${{ secrets.HELM_TOKEN }}@github.com/CDCgov/NEDSS-Helm.git
@@ -72,6 +70,8 @@ jobs:
     - name: Commit and pull request to helm repository into main
       if: ${{ contains(env.ran_push_to_main, true) == false }}
       run: |
+        git config --global user.name ${{ secrets.GIT_USER_NAME }}
+        git config --global user.email  ${{ secrets.GIT_USER_EMAIL }}
         git checkout -b helm-update-${{inputs.microservice_name}}-${{ inputs.new_image_tag}}
         git add -A
         git commit -m "updating helm chart ${{ inputs.values_file_with_path}} with image tag ${{ inputs.new_image_tag}}"
