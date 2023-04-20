@@ -74,20 +74,22 @@ jobs:
 
     # Create an image tag with metadata
     - name: (Gradle) Create microservice version tag with metadata
+      id: set-env-variables
       if: ${{ inputs.update_helm_chart != "NONE" }}
       run: |
         app_version=$(./gradlew printVersion -PversionClassifier=${{inputs.environment_classifier}} | grep "Version:" | awk '{print $2}')
         new_image_tag=$app_version.${{env.github_sha_short}}
         echo "new_image_tag=$new_image_tag" >> $GITHUB_ENV
-   
     
     # Create an image tag with no metadata
     - name: (Gradle) Create microservice version tag with metadata
+      id: set-env-variables-clean
       if: ${{ inputs.update_helm_chart == "NONE" }}
       run: |
         app_version=$(./gradlew printVersion -Psnapshot=false | grep "Version:" | awk '{print $2}')
         new_image_tag=$app_version
         echo "new_image_tag=$new_image_tag" >> $GITHUB_ENV
+        echo "new_image_tag=$new_image_tag" >> $GITHUB_OUTPUT
 
     - name: Set image tag output
       id: set-env-variables

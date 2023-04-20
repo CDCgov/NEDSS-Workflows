@@ -43,13 +43,13 @@ on:
       output_image_tag:
         description: "Container image tag" 
         value: ${{ jobs.build.outputs.output_image_tag }}
-
 jobs:
   build:
     name: Build and store container
     runs-on: ubuntu-latest
     outputs:
       output_image_tag: ${{ steps.set-env-variables.outputs.output_image_tag }}
+
     # These permissions are needed to interact with GitHub's OIDC Token endpoint.
     # New comment
     permissions:
@@ -76,10 +76,12 @@ jobs:
         echo "github_tag=$github_tag" >> $GITHUB_ENV     
 
     - name: (Gradle) Create microservice version tag
+      id: set-env-variables
       run: |
         app_version=$(./gradlew printVersion -PversionClassifier=${{inputs.environment_classifier}} | grep "Version:" | awk '{print $2}')
         new_image_tag=$app_version.${{env.github_sha_short}}
         echo "new_image_tag=$new_image_tag" >> $GITHUB_ENV
+        echo "new_image_tag=$new_image_tag" >> $GITHUB_OUTPUT
 
     - name: Set image tag output
       id: set-env-variables
