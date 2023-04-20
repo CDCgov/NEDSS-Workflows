@@ -45,11 +45,21 @@ on:
       GIT_USER_NAME:
         description: "Secret named ECR_REPO_BASE_NAME for the CI user name."
         required: true
+      HELM_TOKEN:
+        description: "Secret named HELM_TOKEN to access helm chart repository"
+        required: true
+    outputs:
+      output_image_tag:
+        description: "Container image tag" 
+        value: ${{ jobs.build.outputs.output_image_tag }}
 
 jobs:
   deploy:
     name: Tag container for upper environment
     runs-on: ubuntu-latest
+    outputs:
+      output_image_tag: ${{ steps.set-env-variables.outputs.output_image_tag }}
+ 
     # These permissions are needed to interact with GitHub's OIDC Token endpoint.
     # New comment
     permissions:
@@ -77,6 +87,10 @@ jobs:
         app_version=$(grep ^FROM ${{ inputs.dockerfile_relative_path }}/dockerfile | head -1 | awk -F':' '{print $2}' | awk '{print $1}')
         new_image_tag=$app_version
         echo "new_image_tag=$new_image_tag" >> $GITHUB_ENV
+
+    - name: Set image tag output
+      id: set-env-variables
+      run: echo "output_image_tag=${{ env.new_image_tag }}" >> $GITHUB_OUTPUT
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -118,13 +132,13 @@ jobs:
         echo "Pushing image to ECR..."
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-  update-helm:
-    needs: build
-    if: ${{ inputs.update_helm_chart == true }}    
-    uses: CDCgov/NEDSS-Workflows/.github/workflows/Update-helm-charts.yaml@main
-    with:
-      values_file_with_path: ${{ inputs.values_file_with_path }}
-      new_image_tag: ${{ env.new_image_tag }}
-      microservice_name: ${{inputs.microservice_name}}
-      GIT_USER_EMAIL: ${{ secrets.GIT_USER_EMAIL }}
-      GIT_USER_NAME: ${{ secrets.GIT_USER_NAME }}
+  # update-helm:
+  #   needs: build
+  #   if: ${{ inputs.update_helm_chart == true }}    
+  #   uses: CDCgov/NEDSS-Workflows/.github/workflows/Update-helm-charts.yaml@main
+  #   with:
+  #     values_file_with_path: ${{ inputs.values_file_with_path }}
+  #     new_image_tag: ${{ env.new_image_tag }}
+  #     microservice_name: ${{inputs.microservice_name}}
+  #     GIT_USER_EMAIL: ${{ secrets.GIT_USER_EMAIL }}
+  #     GIT_USER_NAME: ${{ secrets.GIT_USER_NAME }}
