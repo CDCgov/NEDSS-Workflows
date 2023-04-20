@@ -74,7 +74,6 @@ jobs:
 
     # Create an image tag with metadata
     - name: (Other) Create microservice version tag from dockerfile image name
-      id: set-env-variables
       if: ${{ inputs.update_helm_chart != "NONE" }}
       run: |
         app_version=$(grep ^FROM ${{ inputs.dockerfile_relative_path }}/dockerfile | head -1 | awk -F':' '{print $2}' | awk '{print $1}')
@@ -84,7 +83,6 @@ jobs:
     
     # Create an image tag with no metadata
     - name: (Other) Create microservice version tag from dockerfile image name
-      id: set-env-variables-clean
       if: ${{ inputs.update_helm_chart == "NONE" }}
       run: |
         app_version=$(grep ^FROM ${{ inputs.dockerfile_relative_path }}/dockerfile | head -1 | awk -F':' '{print $2}' | awk '{print $1}')

@@ -76,7 +76,6 @@ jobs:
         echo "github_tag=$github_tag" >> $GITHUB_ENV     
 
     - name: (Gradle) Create microservice version tag
-      id: set-env-variables
       run: |
         app_version=$(./gradlew printVersion -PversionClassifier=${{inputs.environment_classifier}} | grep "Version:" | awk '{print $2}')
         new_image_tag=$app_version.${{env.github_sha_short}}

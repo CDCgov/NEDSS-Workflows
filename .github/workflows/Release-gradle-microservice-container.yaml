@@ -74,7 +74,6 @@ jobs:
 
     # Create an image tag with metadata
     - name: (Gradle) Create microservice version tag with metadata
-      id: set-env-variables
       if: ${{ inputs.update_helm_chart != "NONE" }}
       run: |
         app_version=$(./gradlew printVersion -PversionClassifier=${{inputs.environment_classifier}} | grep "Version:" | awk '{print $2}')
@@ -83,7 +82,6 @@ jobs:
     
     # Create an image tag with no metadata
     - name: (Gradle) Create microservice version tag with metadata
-      id: set-env-variables-clean
       if: ${{ inputs.update_helm_chart == "NONE" }}
       run: |
         app_version=$(./gradlew printVersion -Psnapshot=false | grep "Version:" | awk '{print $2}')
