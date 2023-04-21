@@ -39,15 +39,18 @@ on:
       HELM_TOKEN:
         description: "Secret named HELM_TOKEN to access helm chart repository"
         required: true
+    outputs:
+      output_image_tag:
+        description: "Container image tag" 
+        value: ${{ jobs.build.outputs.output_image_tag }}
 
 jobs:
   build:
     name: Build and store container
     runs-on: ubuntu-latest
     outputs:
-      output_image_tag: ${{ steps.set-env-variables.outputs.new_image_tag }}
-    # outputs:
-    #   output-image-tag: ${{ steps.set-env-variables.outputs.new_image_tag }}
+      output_image_tag: ${{ steps.set-env-variables.outputs.output_image_tag }}
+
     # These permissions are needed to interact with GitHub's OIDC Token endpoint.
     # New comment
     permissions:
@@ -75,12 +78,15 @@ jobs:
         echo "github_repo_name=$github_repo_name" >> $GITHUB_ENV        
 
     - name: (Other) Create microservice version tag from dockerfile image name
-      id: set-env-variables
       run: |
         app_version=$(grep ^FROM ${{ inputs.dockerfile_relative_path }}/Dockerfile | head -1 | awk -F':' '{print $2}' | awk '{print $1}')
         new_image_tag=$app_version-${{inputs.environment_classifier}}.${{env.github_sha_short}}
         echo "new_image_tag=$new_image_tag" >> $GITHUB_ENV
         echo "new_image_tag=$new_image_tag" >> $GITHUB_OUTPUT
+
+    - name: Set image tag output
+      id: set-env-variables
+      run: echo "output_image_tag=${{ env.new_image_tag }}" >> $GITHUB_OUTPUT
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
