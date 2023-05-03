@@ -73,7 +73,8 @@ jobs:
         github_repo_name="$(echo $GITHUB_REPOSITORY | cut -d'/' -f2)"        
         github_tag=${GITHUB_REF#refs/tags/}
         echo "github_sha_short=$github_sha_short" >> $GITHUB_ENV        
-        echo "github_tag=$github_tag" >> $GITHUB_ENV     
+        echo "github_tag=$github_tag" >> $GITHUB_ENV
+        echo "github_repo_name=$github_repo_name" >> $GITHUB_ENV      
 
     - name: (Gradle) Create microservice version tag
       run: |
