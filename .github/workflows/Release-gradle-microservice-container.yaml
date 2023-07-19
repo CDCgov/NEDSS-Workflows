@@ -51,7 +51,7 @@ on:
     outputs:
       output_image_tag:
         description: "Container image tag" 
-        value: ${{ jobs.build.outputs.output_image_tag }}
+        value: ${{ jobs.deploy.outputs.output_image_tag }}
 
 jobs:
   deploy:
