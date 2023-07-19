@@ -51,7 +51,7 @@ on:
     outputs:
       output_image_tag:
         description: "Container image tag" 
-        value: ${{ jobs.build.outputs.output_image_tag }}
+        value: ${{ jobs.deploy.outputs.output_image_tag }}
 
 jobs:
   deploy:
@@ -67,22 +67,35 @@ jobs:
       contents: read
 
     steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Cache Gradle packages
+      uses: actions/cache@v1
+      with:
+        path: ~/.gradle/caches
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+        restore-keys: ${{ runner.os }}-gradle
+
     - name: Configure Environment Variables
-      run: |   
+      run: |  
+        github_sha_short=$(git rev-parse --short "$GITHUB_SHA")   
         github_repo_name="$(echo $GITHUB_REPOSITORY | cut -d'/' -f2)"  
         echo "github_repo_name=$github_repo_name" >> $GITHUB_ENV
+        echo "github_sha_short=$github_sha_short" >> $GITHUB_ENV
 
     # Create an image tag with metadata
     - name: (Gradle) Create microservice version tag with metadata
-      if: ${{ inputs.update_helm_chart != "NONE" }}
+      if: ${{ inputs.update_helm_chart != 'NONE' }}
       run: |
         app_version=$(./gradlew printVersion -PversionClassifier=${{inputs.environment_classifier}} | grep "Version:" | awk '{print $2}')
         new_image_tag=$app_version.${{env.github_sha_short}}
         echo "new_image_tag=$new_image_tag" >> $GITHUB_ENV
+        echo "new_image_tag=$new_image_tag" >> $GITHUB_OUTPUT
     
     # Create an image tag with no metadata
     - name: (Gradle) Create microservice version tag with metadata
-      if: ${{ inputs.update_helm_chart == "NONE" }}
+      if: ${{ inputs.update_helm_chart == 'NONE' }}
       run: |
         app_version=$(./gradlew printVersion -Psnapshot=false | grep "Version:" | awk '{print $2}')
         new_image_tag=$app_version
@@ -114,7 +127,7 @@ jobs:
         # Tag existing docker container in ECR 
         MANIFEST=$(aws ecr batch-get-image --repository-name "$ECR_REPOSITORY" --image-ids imageTag="${{inputs.existing-image-tag}}" --output json | jq --raw-output --join-output '.images[0].imageManifest')
 
-        aws ecr put-image --repository-name "$ECR_REPOSITORY" --image-tag "${{env.new-image-tag}}" --image-manifest "$MANIFEST"
+        aws ecr put-image --repository-name "$ECR_REPOSITORY" --image-tag "${{env.new_image_tag}}" --image-manifest "$MANIFEST"
     
     - name: Checkout
       if: '${{inputs.build-new-container == true}}'
@@ -126,20 +139,10 @@ jobs:
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: ${{ secrets.ECR_REPO_BASE_NAME }}/${{ inputs.microservice_name }}
-        IMAGE_TAG: "${{ env.new-image-tag }}"
+        IMAGE_TAG: "${{ env.new_image_tag }}"
       run: |
         # Build a docker container and push it to ECR 
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ${{inputs.dockerfile_relative_path}}
         echo "Pushing image to ECR..."
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-  # update-helm:
-  #   needs: build
-  #   if: ${{ inputs.update_helm_chart == true }}    
-  #   uses: CDCgov/NEDSS-Workflows/.github/workflows/Update-helm-charts.yaml@main
-  #   with:
-  #     values_file_with_path: ${{ inputs.values_file_with_path }}
-  #     new_image_tag: ${{ env.new_image_tag }}
-  #     microservice_name: ${{inputs.microservice_name}}
-  #     GIT_USER_EMAIL: ${{ secrets.GIT_USER_EMAIL }}
-  #     GIT_USER_NAME: ${{ secrets.GIT_USER_NAME }}
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT  
