@@ -114,7 +114,7 @@ jobs:
         # Tag existing docker container in ECR 
         MANIFEST=$(aws ecr batch-get-image --repository-name "$ECR_REPOSITORY" --image-ids imageTag="${{inputs.existing-image-tag}}" --output json | jq --raw-output --join-output '.images[0].imageManifest')
 
-        aws ecr put-image --repository-name "$ECR_REPOSITORY" --image-tag "${{env.new-image-tag}}" --image-manifest "$MANIFEST"
+        aws ecr put-image --repository-name "$ECR_REPOSITORY" --image-tag "${{env.new_image_tag}}" --image-manifest "$MANIFEST"
     
     - name: Checkout
       if: '${{inputs.build-new-container == true}}'
@@ -126,7 +126,7 @@ jobs:
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: ${{ secrets.ECR_REPO_BASE_NAME }}/${{ inputs.microservice_name }}
-        IMAGE_TAG: "${{ env.new-image-tag }}"
+        IMAGE_TAG: "${{ env.new_image_tag }}"
       run: |
         # Build a docker container and push it to ECR 
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ${{inputs.dockerfile_relative_path}}
