@@ -67,10 +67,22 @@ jobs:
       contents: read
 
     steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Cache Gradle packages
+      uses: actions/cache@v1
+      with:
+        path: ~/.gradle/caches
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+        restore-keys: ${{ runner.os }}-gradle
+
     - name: Configure Environment Variables
-      run: |   
+      run: |  
+        github_sha_short=$(git rev-parse --short "$GITHUB_SHA")   
         github_repo_name="$(echo $GITHUB_REPOSITORY | cut -d'/' -f2)"  
         echo "github_repo_name=$github_repo_name" >> $GITHUB_ENV
+        echo "github_sha_short=$github_sha_short" >> $GITHUB_ENV
 
     # Create an image tag with metadata
     - name: (Gradle) Create microservice version tag with metadata
@@ -79,6 +91,7 @@ jobs:
         app_version=$(./gradlew printVersion -PversionClassifier=${{inputs.environment_classifier}} | grep "Version:" | awk '{print $2}')
         new_image_tag=$app_version.${{env.github_sha_short}}
         echo "new_image_tag=$new_image_tag" >> $GITHUB_ENV
+        echo "new_image_tag=$new_image_tag" >> $GITHUB_OUTPUT
     
     # Create an image tag with no metadata
     - name: (Gradle) Create microservice version tag with metadata
