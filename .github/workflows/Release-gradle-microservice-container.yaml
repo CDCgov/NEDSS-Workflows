@@ -74,7 +74,7 @@ jobs:
 
     # Create an image tag with metadata
     - name: (Gradle) Create microservice version tag with metadata
-      if: ${{ inputs.update_helm_chart != "NONE" }}
+      if: ${{ inputs.update_helm_chart != 'NONE' }}
       run: |
         app_version=$(./gradlew printVersion -PversionClassifier=${{inputs.environment_classifier}} | grep "Version:" | awk '{print $2}')
         new_image_tag=$app_version.${{env.github_sha_short}}
@@ -82,7 +82,7 @@ jobs:
     
     # Create an image tag with no metadata
     - name: (Gradle) Create microservice version tag with metadata
-      if: ${{ inputs.update_helm_chart == "NONE" }}
+      if: ${{ inputs.update_helm_chart == 'NONE' }}
       run: |
         app_version=$(./gradlew printVersion -Psnapshot=false | grep "Version:" | awk '{print $2}')
         new_image_tag=$app_version
@@ -132,14 +132,4 @@ jobs:
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ${{inputs.dockerfile_relative_path}}
         echo "Pushing image to ECR..."
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-  # update-helm:
-  #   needs: build
-  #   if: ${{ inputs.update_helm_chart == true }}    
-  #   uses: CDCgov/NEDSS-Workflows/.github/workflows/Update-helm-charts.yaml@main
-  #   with:
-  #     values_file_with_path: ${{ inputs.values_file_with_path }}
-  #     new_image_tag: ${{ env.new_image_tag }}
-  #     microservice_name: ${{inputs.microservice_name}}
-  #     GIT_USER_EMAIL: ${{ secrets.GIT_USER_EMAIL }}
-  #     GIT_USER_NAME: ${{ secrets.GIT_USER_NAME }}
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT  
