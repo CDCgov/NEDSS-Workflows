@@ -13,16 +13,7 @@ on:
       environment_classifier:
         description: Metadata to append to application version. Ex. if version=1.0.0, and environment_classifier=SNAPSHOT result will be 1.0.0-SNAPSHOT.<githubsha>.
         required: true
-        type: string
-      update_helm_chart:
-        description: (true or false) Should the image tag be updated within the Helm chart? If true, specify a value for values_file_with_path. Default=false.
-        required: true
-        type: boolean
-        default: false
-      values_file_with_path:
-        description: What is the path to the helm chart in NBS helm chart repository? (ex. charts/elasticsearch/values.yaml)
-        type: string
-        default: ""       
+        type: string       
     secrets:
       CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID:
         description: "Secret named CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID where ECR resides."
@@ -110,13 +101,3 @@ jobs:
         echo "Pushing image to ECR..."
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-  # update-helm:
-  #   needs: build
-  #   if: ${{ inputs.update_helm_chart == true }}    
-  #   uses: CDCgov/NEDSS-Workflows/.github/workflows/Update-helm-charts.yaml@main
-  #   with:
-  #     values_file_with_path: ${{ inputs.values_file_with_path }}
-  #     new_image_tag: ${{ env.new_image_tag }}
-  #     microservice_name: ${{inputs.microservice_name}}
-  #     GIT_USER_EMAIL: ${{ secrets.GIT_USER_EMAIL }}
-  #     GIT_USER_NAME: ${{ secrets.GIT_USER_NAME }}
