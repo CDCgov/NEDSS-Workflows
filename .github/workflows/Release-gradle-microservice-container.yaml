@@ -15,6 +15,11 @@ on:
         required: true
         default: false
         type: boolean
+      java_version:
+        description: Version of java which you are using to build you code.
+        required: false
+        default: '17'
+        type: string 
       dockerfile_relative_path:
         description: "Relative path to dockerfile being built (use '-f' docker argument if the dockerfile referenced from the root directory)."
         required: false
@@ -62,11 +67,11 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Cache Gradle packages
-      uses: actions/cache@v1
+      uses: actions/setup-java@v3
       with:
-        path: ~/.gradle/caches
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
-        restore-keys: ${{ runner.os }}-gradle
+        distribution: 'temurin'
+        java-version: ${{ inputs.java_version }}
+        cache: 'gradle'
 
     - name: Configure Environment Variables
       run: |  
