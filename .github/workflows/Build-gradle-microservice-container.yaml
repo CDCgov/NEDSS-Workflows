@@ -13,7 +13,12 @@ on:
       environment_classifier:
         description: Metadata to append to application version. Ex. if version=1.0.0, and environment_classifier=SNAPSHOT result will be 1.0.0-SNAPSHOT.<githubsha>.
         required: true
-        type: string       
+        type: string
+      java_version:
+        description: Version of java which you are using to build you code.
+        required: false
+        default: '17'
+        type: string        
     secrets:
       CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID:
         description: "Secret named CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID where ECR resides."
@@ -52,11 +57,11 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Cache Gradle packages
-      uses: actions/cache@v1
+      uses: actions/setup-java@v3
       with:
-        path: ~/.gradle/caches
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
-        restore-keys: ${{ runner.os }}-gradle
+        distribution: 'temurin'
+        java-version: ${{ inputs.java_version }}
+        cache: 'gradle'
     
     - name: Configure Environment Variables
       run: |

@@ -38,6 +38,7 @@ microservice_directory
 1. `<environment_classifier>` - metadata you wish to add to the result container artifact (eg. SNAPSHOT, TEST, TEST2, DEMO).
 2. `<update_helm_chart>` - (true or false) Should the image tag be updated within the Helm chart?
 3. `<values_file_with_path>` - What is the path to the helm chart in NBS helm chart repository? (ex. charts/elasticsearch/values.yaml).
+4. `<java_version>` - Version of java which you are using to build you code.
 
 #### Required GitHub Secrets
 1. `CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID` - account id for container storage.
@@ -55,6 +56,7 @@ Ensure "uses" section is calling the desired workflow for your project type. I.e
 3. `<environment_classifier>` - metadata you wish to add to the result container artifact (eg. SNAPSHOT, TEST, TEST2, DEMO).
 4. `<update_helm_chart>` - (true or false) Should the image tag be updated within the Helm chart?
 5. `<values_file_with_path>` - What is the path to the helm chart in NBS helm chart repository? (ex. charts/elasticsearch/values.yaml).
+6. `<java_version>` - Version of java which you are using to build you code.
 
 #### Variables
 1. `existing-image-tag` - Image tag of existing container in ECR (not used if build-new-container=true).
