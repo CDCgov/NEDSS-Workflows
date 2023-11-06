@@ -1,6 +1,4 @@
-Name: Run Trivy Container Scann
-description: Runs Trivy to scan and report container vulnerabilities
-
+name: Run Trivy Container Scan
 on:
   workflow_call:
     inputs:      
