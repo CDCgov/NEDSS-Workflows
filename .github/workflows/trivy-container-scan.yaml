@@ -16,7 +16,7 @@ on:
       upload-to-github-security-tab:
         description: 'Upload results to GitHub security tab?'
         required: true
-        default: true
+        default: false
         type: boolean
       ignore-unfixed:
         description: Ignore unpatched/unfixed vulnerabilities
@@ -57,7 +57,7 @@ jobs:
     steps:
       # Runs scanner for neat printing in GitHub Actions runner
     - name: Run Trivy vulnerability scanner
-      if: ${{ github.upload-to-github-security-tab }}
+      if: ${{ !github.upload-to-github-security-tab }}
       uses: aquasecurity/trivy-action@master
       with:
         image-ref: '${{ inputs.container-ref }}'
