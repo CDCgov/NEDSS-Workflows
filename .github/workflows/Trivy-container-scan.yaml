@@ -8,17 +8,17 @@ on:
         type: string
       severity:
         description: 'Severities of vulnerabilities to be scanned for and displayed (UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL)'
-        required: true  
+        required: false  
         default: 'CRITICAL,HIGH'
         type: string 
       upload-to-github-security-tab:
         description: 'Upload results to GitHub security tab?'
-        required: true
+        required: false
         default: false
         type: boolean
       ignore-unfixed:
         description: Ignore unpatched/unfixed vulnerabilities
-        required: true
+        required: false
         default: true
         type: boolean 
       skip-dirs:
