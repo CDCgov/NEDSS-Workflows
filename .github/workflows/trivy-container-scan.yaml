@@ -75,7 +75,7 @@ jobs:
       if: ${{ github.upload-to-github-security-tab }}
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: '${{ inputs.container-ref }}''
+        image-ref: '${{ inputs.container-ref }}'
         format: 'sarif'
         output: 'trivy-results.sarif'
         exit-code: '1'
