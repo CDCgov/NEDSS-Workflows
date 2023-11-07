@@ -11,11 +11,7 @@ on:
         description: "Relative path to dockerfile being built (use of '-f' docker argument will FAIL in this particular workflow)."
         required: true
         type: string
-      # trivy inputs      
-      container-ref:
-        description: 'Locally built container id which Trivy should scan'
-        required: true
-        type: string
+      # trivy inputs       
       severity:
         description: 'Severities of vulnerabilities to be scanned for and displayed (UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL)'
         required: false  
