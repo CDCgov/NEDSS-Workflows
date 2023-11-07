@@ -73,10 +73,8 @@ jobs:
     
     - name: Scan container image
       uses: CDCgov/NEDSS-Workflows/.github/actions/trivy-scanner@CNPT-1494-trivy-action
-      env: 
-        IMAGE_TAG: "${{ inputs.microservice_name }}"
       with:
-        container-ref: $IMAGE_TAG
+        container-ref: ${{ inputs.microservice_name }}
         severity: ${{ inputs.severity }}
         upload-to-github-security-tab: ${{ inputs.upload-to-github-security-tab }}
         ignore-unfixed: ${{ inputs.ignore-unfixed }}
