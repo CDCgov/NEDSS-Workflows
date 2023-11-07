@@ -1,7 +1,17 @@
 name: Run Trivy Container Scan
 on:
   workflow_call:
-    inputs:      
+    inputs:
+      # container build inputs
+      microservice_name:
+        description: "Name of microservice corresponding to a container in ECR."
+        required: true
+        type: string
+      dockerfile_relative_path:
+        description: "Relative path to dockerfile being built (use of '-f' docker argument will FAIL in this particular workflow)."
+        required: true
+        type: string
+      # trivy inputs      
       container-ref:
         description: 'Locally built container id which Trivy should scan'
         required: true
@@ -57,39 +67,20 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
-    - name: Configure Environment Variables
-      run: |
-        github_sha_short=$(git rev-parse --short "$GITHUB_SHA")      
-        github_repo_name="$(echo $GITHUB_REPOSITORY | cut -d'/' -f2)"        
-        github_tag=${GITHUB_REF#refs/tags/}
-        echo "github_sha_short=$github_sha_short" >> $GITHUB_ENV        
-        echo "github_tag=$github_tag" >> $GITHUB_ENV
-        echo "github_repo_name=$github_repo_name" >> $GITHUB_ENV        
-
-    - name: (Other) Create microservice version tag from dockerfile image name
-      run: |
-        app_version=$(grep ^FROM ${{ inputs.dockerfile_relative_path }}/Dockerfile | head -1 | awk -F':' '{print $2}' | awk '{print $1}')
-        new_image_tag=$app_version-${{inputs.environment_classifier}}.${{env.github_sha_short}}
-        echo "new_image_tag=$new_image_tag" >> $GITHUB_ENV
-        echo "new_image_tag=$new_image_tag" >> $GITHUB_OUTPUT
-
     - name: Build and tag ${{ inputs.microservice_name }} image 
       id: build-image
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ secrets.ECR_REPO_BASE_NAME }}/${{ inputs.microservice_name }}
-        IMAGE_TAG: "${{ env.new_image_tag }}"
+      env:        
+        IMAGE_TAG: "${{ inputs.microservice_name }}"
       run: |
         # Build a docker container 
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ${{ inputs.dockerfile_relative_path}} 
-        echo "CONTAINER_TAG=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV   
+        docker build -t $IMAGE_TAG ${{ inputs.dockerfile_relative_path}}   
     
     - name: Scan container image
       uses: ./.github/actions/trivy-scanner
       env: 
-        CONTAINER_TAG: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        IMAGE_TAG: "${{ inputs.microservice_name }}"
       with:
-        container-ref: ${{ env.CONTAINER_TAG }}
+        container-ref: $IMAGE_TAG
         severity: ${{ inputs.severity }}
         upload-to-github-security-tab: ${{ inputs.upload-to-github-security-tab }}
         ignore-unfixed: ${{ inputs.ignore-unfixed }}
