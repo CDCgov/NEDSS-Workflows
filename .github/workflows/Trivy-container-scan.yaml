@@ -49,42 +49,85 @@ on:
 
 jobs:
   build:
-    name: Scan containers with Trivy
+    name: Scan container with Trivy
     runs-on: ubuntu-latest
  
     steps:
       # Runs scanner for neat printing in GitHub Actions runner
-    - name: Run Trivy vulnerability scanner
-      if: ${{ !github.upload-to-github-security-tab }}
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: '${{ inputs.container-ref }}'
-        format: 'sarif'
-        output: 'trivy-results.sarif'
-        exit-code: '${{ inputs.exit-code }}'
-        ignore-unfixed: ${{inputs.ignore-unfixed}}
-        vuln-type: 'os,library'
-        severity: ${{inputs.severity}}
-        timeout: ${{inputs.timeout}}
-        trivyignores: ${{inputs.trivyignores}}
+    - name: Checkout
+      uses: actions/checkout@v3
 
-    # Runs scanner for printing to GitHub Security Tab
-    - name: Run Trivy vulnerability scanner for printing to GitHub Security Tab
-      if: ${{ github.upload-to-github-security-tab }}
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: '${{ inputs.container-ref }}'
-        format: 'sarif'
-        output: 'trivy-results.sarif'
-        exit-code: '1'
-        ignore-unfixed: ${{inputs.ignore-unfixed}}
-        vuln-type: 'os,library'
-        severity: ${{inputs.severity}}
-        timeout: ${{inputs.timeout}}
-        trivyignores: ${{inputs.trivyignores}}
+    - name: Configure Environment Variables
+      run: |
+        github_sha_short=$(git rev-parse --short "$GITHUB_SHA")      
+        github_repo_name="$(echo $GITHUB_REPOSITORY | cut -d'/' -f2)"        
+        github_tag=${GITHUB_REF#refs/tags/}
+        echo "github_sha_short=$github_sha_short" >> $GITHUB_ENV        
+        echo "github_tag=$github_tag" >> $GITHUB_ENV
+        echo "github_repo_name=$github_repo_name" >> $GITHUB_ENV        
 
-    - name: Upload Trivy scan results to GitHub Security tab
-      if: ${{ github.upload-to-github-security-tab }}
-      uses: github/codeql-action/upload-sarif@v2
+    - name: (Other) Create microservice version tag from dockerfile image name
+      run: |
+        app_version=$(grep ^FROM ${{ inputs.dockerfile_relative_path }}/Dockerfile | head -1 | awk -F':' '{print $2}' | awk '{print $1}')
+        new_image_tag=$app_version-${{inputs.environment_classifier}}.${{env.github_sha_short}}
+        echo "new_image_tag=$new_image_tag" >> $GITHUB_ENV
+        echo "new_image_tag=$new_image_tag" >> $GITHUB_OUTPUT
+
+    - name: Build and tag ${{ inputs.microservice_name }} image 
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ secrets.ECR_REPO_BASE_NAME }}/${{ inputs.microservice_name }}
+        IMAGE_TAG: "${{ env.new_image_tag }}"
+      run: |
+        # Build a docker container 
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ${{ inputs.dockerfile_relative_path}} 
+        echo "CONTAINER_TAG=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV   
+    
+    - name: Scan container image
+      uses: ./.github/actions/trivy-scanner
+      env: 
+        CONTAINER_TAG: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
       with:
-        sarif_file: 'trivy-results.sarif'
+        container-ref: ${{ env.CONTAINER_TAG }}
+        severity: ${{ inputs.severity }}
+        upload-to-github-security-tab: ${{ inputs.upload-to-github-security-tab }}
+        ignore-unfixed: ${{ inputs.ignore-unfixed }}
+        skip-dirs: ${{ inputs.skip-dirs }}
+        skip-files: ${{ inputs.skip-files }}
+        exit-code: ${{ inputs.exit-code }}
+        trivyignores: ${{ inputs.trivyignores }} 
+    # - name: Run Trivy vulnerability scanner
+    #   if: ${{ !github.upload-to-github-security-tab }}
+    #   uses: aquasecurity/trivy-action@master
+    #   with:
+    #     image-ref: '${{ inputs.container-ref }}'
+    #     format: 'sarif'
+    #     output: 'trivy-results.sarif'
+    #     exit-code: '${{ inputs.exit-code }}'
+    #     ignore-unfixed: ${{inputs.ignore-unfixed}}
+    #     vuln-type: 'os,library'
+    #     severity: ${{inputs.severity}}
+    #     timeout: ${{inputs.timeout}}
+    #     trivyignores: ${{inputs.trivyignores}}
+
+    # # Runs scanner for printing to GitHub Security Tab
+    # - name: Run Trivy vulnerability scanner for printing to GitHub Security Tab
+    #   if: ${{ github.upload-to-github-security-tab }}
+    #   uses: aquasecurity/trivy-action@master
+    #   with:
+    #     image-ref: '${{ inputs.container-ref }}'
+    #     format: 'sarif'
+    #     output: 'trivy-results.sarif'
+    #     exit-code: '1'
+    #     ignore-unfixed: ${{inputs.ignore-unfixed}}
+    #     vuln-type: 'os,library'
+    #     severity: ${{inputs.severity}}
+    #     timeout: ${{inputs.timeout}}
+    #     trivyignores: ${{inputs.trivyignores}}
+
+    # - name: Upload Trivy scan results to GitHub Security tab
+    #   if: ${{ github.upload-to-github-security-tab }}
+    #   uses: github/codeql-action/upload-sarif@v2
+    #   with:
+    #     sarif_file: 'trivy-results.sarif'
