@@ -70,7 +70,7 @@ runs:
         image-ref: '${{ inputs.container-ref }}'
         format: 'sarif'
         output: 'trivy-results.sarif'
-        exit-code: '1'
+        exit-code:'${{ inputs.exit-code }}'
         ignore-unfixed: ${{inputs.ignore-unfixed}}
         vuln-type: 'os,library'
         severity: ${{inputs.severity}}
