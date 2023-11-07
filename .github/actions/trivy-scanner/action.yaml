@@ -54,8 +54,7 @@ runs:
       uses: aquasecurity/trivy-action@master
       with:
         image-ref: '${{ inputs.container-ref }}'
-        format: 'sarif'
-        output: 'trivy-results.sarif'
+        format: 'table'        
         exit-code: '${{ inputs.exit-code }}'
         ignore-unfixed: ${{inputs.ignore-unfixed}}
         vuln-type: 'os,library'
