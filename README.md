@@ -59,7 +59,7 @@ This workflow build a container and push it to ECR. Application versioning is ob
 | skip-files | string | '' | 'Comma separated list of files where traversal is skipped' | false |
 | timeout | string | '10m0s' | 'Scan timeout duration' | false |
 | trivyignores | string |  | 'Comma-separated list of relative paths in repository to one or more .trivyignore files, for usage see https://aquasecurity.github.io/trivy/v0.19.2/vulnerability/examples/filter/' | false |
-| upload-to-github-security-tab | boolean | false | 'Upload results to GitHub security tab?' | false |
+| upload-to-github-security-tab | boolean | true | 'Upload results to GitHub security tab?' | false |
 
 #### Input Secrets
 | Key | Type | Default | Description | Required |
@@ -92,7 +92,7 @@ This workflow build a container and push it to ECR. Application versioning is ob
 | skip-files | string | '' | 'Comma separated list of files where traversal is skipped' | false |
 | timeout | string | '10m0s' | 'Scan timeout duration' | false |
 | trivyignores | string |  | 'Comma-separated list of relative paths in repository to one or more .trivyignore files, for usage see https://aquasecurity.github.io/trivy/v0.19.2/vulnerability/examples/filter/' | false |
-| upload-to-github-security-tab | boolean | false | 'Upload results to GitHub security tab?' | false |
+| upload-to-github-security-tab | boolean | true | 'Upload results to GitHub security tab?' | false |
 
 #### Input Secrets
 | Key | Type | Default | Description | Required |
@@ -128,7 +128,7 @@ This workflow has 2 runtime options. The first option is to tag an *existing* co
 | skip-files | string | '' | 'Comma separated list of files where traversal is skipped' | false |
 | timeout | string | '10m0s' | 'Scan timeout duration' | false |
 | trivyignores | string |  | 'Comma-separated list of relative paths in repository to one or more .trivyignore files, for usage see https://aquasecurity.github.io/trivy/v0.19.2/vulnerability/examples/filter/' | false |
-| upload-to-github-security-tab | boolean | false | 'Upload results to GitHub security tab?' | false |
+| upload-to-github-security-tab | boolean | true | 'Upload results to GitHub security tab?' | false |
 
 #### Input Secrets
 | Key | Type | Default | Description | Required |
@@ -163,7 +163,7 @@ This workflow has 2 runtime options. The first option is to tag an *existing* co
 | skip-files | string | '' | 'Comma separated list of files where traversal is skipped' | false |
 | timeout | string | '10m0s' | 'Scan timeout duration' | false |
 | trivyignores | string |  | 'Comma-separated list of relative paths in repository to one or more .trivyignore files, for usage see https://aquasecurity.github.io/trivy/v0.19.2/vulnerability/examples/filter/' | false |
-| upload-to-github-security-tab | boolean | false | 'Upload results to GitHub security tab?' | false |
+| upload-to-github-security-tab | boolean | true | 'Upload results to GitHub security tab?' | false |
 
 #### Input Secrets
 | Key | Type | Default | Description | Required |
