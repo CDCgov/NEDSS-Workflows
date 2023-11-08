@@ -92,6 +92,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
+      security-events: write
 
     steps:
     - name: Checkout
