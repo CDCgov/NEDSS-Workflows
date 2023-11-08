@@ -72,7 +72,7 @@ jobs:
         docker build -t $IMAGE_TAG ${{ inputs.dockerfile_relative_path}}   
     
     - name: Scan container image
-      uses: CDCgov/NEDSS-Workflows/.github/actions/trivy-scanner@main
+      uses: CDCgov/NEDSS-Workflows/.github/actions/trivy-scanner@CNPT-1494-trivy-action
       with:
         container-ref: ${{ inputs.microservice_name }}
         severity: ${{ inputs.severity }}
