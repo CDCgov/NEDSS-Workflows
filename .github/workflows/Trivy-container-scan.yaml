@@ -25,7 +25,7 @@ on:
       ignore-unfixed:
         description: Ignore unpatched/unfixed vulnerabilities
         required: false
-        default: true
+        default: false
         type: boolean 
       skip-dirs:
         description: 'Comma separated list of directories where traversal is skipped'
@@ -72,7 +72,7 @@ jobs:
         docker build -t $IMAGE_TAG ${{ inputs.dockerfile_relative_path}}   
     
     - name: Scan container image
-      uses: CDCgov/NEDSS-Workflows/.github/actions/trivy-scanner@CNPT-1494-trivy-action
+      uses: CDCgov/NEDSS-Workflows/.github/actions/trivy-scanner@main
       with:
         container-ref: ${{ inputs.microservice_name }}
         severity: ${{ inputs.severity }}
@@ -82,37 +82,4 @@ jobs:
         skip-files: ${{ inputs.skip-files }}
         exit-code: ${{ inputs.exit-code }}
         trivyignores: ${{ inputs.trivyignores }} 
-    # - name: Run Trivy vulnerability scanner
-    #   if: ${{ !github.upload-to-github-security-tab }}
-    #   uses: aquasecurity/trivy-action@master
-    #   with:
-    #     image-ref: '${{ inputs.container-ref }}'
-    #     format: 'sarif'
-    #     output: 'trivy-results.sarif'
-    #     exit-code: '${{ inputs.exit-code }}'
-    #     ignore-unfixed: ${{inputs.ignore-unfixed}}
-    #     vuln-type: 'os,library'
-    #     severity: ${{inputs.severity}}
-    #     timeout: ${{inputs.timeout}}
-    #     trivyignores: ${{inputs.trivyignores}}
-
-    # # Runs scanner for printing to GitHub Security Tab
-    # - name: Run Trivy vulnerability scanner for printing to GitHub Security Tab
-    #   if: ${{ github.upload-to-github-security-tab }}
-    #   uses: aquasecurity/trivy-action@master
-    #   with:
-    #     image-ref: '${{ inputs.container-ref }}'
-    #     format: 'sarif'
-    #     output: 'trivy-results.sarif'
-    #     exit-code: '1'
-    #     ignore-unfixed: ${{inputs.ignore-unfixed}}
-    #     vuln-type: 'os,library'
-    #     severity: ${{inputs.severity}}
-    #     timeout: ${{inputs.timeout}}
-    #     trivyignores: ${{inputs.trivyignores}}
-
-    # - name: Upload Trivy scan results to GitHub Security tab
-    #   if: ${{ github.upload-to-github-security-tab }}
-    #   uses: github/codeql-action/upload-sarif@v2
-    #   with:
-    #     sarif_file: 'trivy-results.sarif'
+   

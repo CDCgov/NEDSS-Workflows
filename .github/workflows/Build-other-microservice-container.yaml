@@ -24,12 +24,12 @@ on:
       upload-to-github-security-tab:
         description: 'Upload results to GitHub security tab?'
         required: false
-        default: false
+        default: true
         type: boolean
       ignore-unfixed:
         description: Ignore unpatched/unfixed vulnerabilities
         required: false
-        default: true
+        default: false
         type: boolean 
       skip-dirs:
         description: 'Comma separated list of directories where traversal is skipped'
@@ -131,12 +131,13 @@ jobs:
         ECR_REPOSITORY: ${{ secrets.ECR_REPO_BASE_NAME }}/${{ inputs.microservice_name }}
         IMAGE_TAG: "${{ env.new_image_tag }}"
       run: |
-        # Build a docker container 
+        # Build a docker container
+        echo "Building image.." 
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ${{ inputs.dockerfile_relative_path}}
         echo "CONTAINER_TAG=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
       
     - name: Scan container image
-      uses: CDCgov/NEDSS-Workflows/.github/actions/trivy-scanner@CNPT-1494-trivy-action
+      uses: CDCgov/NEDSS-Workflows/.github/actions/trivy-scanner@main
       with:
         container-ref: ${{ env.CONTAINER_TAG }}
         severity: ${{ inputs.severity }}
