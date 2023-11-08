@@ -28,6 +28,7 @@ This action uses Trivy to scan built container images for vulnerabilties and out
 | container-ref | string |  | 'Locally built container id which Trivy should scan' | true |
 | exit-code | string | '0' | 'Exit code when specified vulnerabilities are found (0).' | false |
 | ignore-unfixed | boolean | false | 'Ignore unpatched/unfixed vulnerabilities' | false |
+| limit-severities-for-sarif | boolean | true | 'By default SARIF format enforces output of all vulnerabilities regardless of configured severities. To override this behavior set this parameter to true' | false |
 | severity | string | 'CRITICAL,HIGH' | 'Severities of vulnerabilities to be scanned for and displayed (UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL)' | false |
 | skip-dirs | string | '' | 'Comma separated list of directories where traversal is skipped' | false |
 | skip-files | string | '' | 'Comma separated list of files where traversal is skipped' | false |
@@ -51,6 +52,7 @@ This workflow build a container and push it to ECR. Application versioning is ob
 | exit-code | string | '0' | 'Exit code when specified vulnerabilities are found (0).' | false |
 | ignore-unfixed | boolean | false | 'Ignore unpatched/unfixed vulnerabilities' | false |
 | java_version | string | '17' | 'Version of java which you are using to build you code.' | false |
+| limit-severities-for-sarif | boolean | true | 'By default SARIF format enforces output of all vulnerabilities regardless of configured severities. To override this behavior set this parameter to true' | false |
 | microservice_name | string |  | 'Name of microservice corresponding to a container in ECR.' | true |
 | severity | string | 'CRITICAL,HIGH' | 'Severities of vulnerabilities to be scanned for and displayed (UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL)' | false |
 | skip-dirs | string | '' | 'Comma separated list of directories where traversal is skipped' | false |
@@ -83,6 +85,7 @@ This workflow build a container and push it to ECR. Application versioning is ob
 | environment_classifier | string |  | 'Metadata to append to application version. Ex. if version=1.0.0, and environment_classifier=SNAPSHOT result will be 1.0.0-SNAPSHOT.<githubsha>.' | true |
 | exit-code | string | '0' | 'Exit code when specified vulnerabilities are found (0).' | false |
 | ignore-unfixed | boolean | false | 'Ignore unpatched/unfixed vulnerabilities' | false |
+| limit-severities-for-sarif | boolean | true | 'By default SARIF format enforces output of all vulnerabilities regardless of configured severities. To override this behavior set this parameter to true' | false |
 | microservice_name | string |  | 'Name of microservice corresponding to a container in ECR.' | true |
 | severity | string | 'CRITICAL,HIGH' | 'Severities of vulnerabilities to be scanned for and displayed (UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL)' | false |
 | skip-dirs | string | '' | 'Comma separated list of directories where traversal is skipped' | false |
@@ -118,6 +121,7 @@ This workflow has 2 runtime options. The first option is to tag an *existing* co
 | exit-code | string | '0' | 'Exit code when specified vulnerabilities are found (0).' | false |
 | ignore-unfixed | boolean | false | 'Ignore unpatched/unfixed vulnerabilities' | false |
 | java_version | string | '17' | 'Version of java which you are using to build you code.' | false |
+| limit-severities-for-sarif | boolean | true | 'By default SARIF format enforces output of all vulnerabilities regardless of configured severities. To override this behavior set this parameter to true' | false |
 | microservice_name | string |  | 'Name of microservice corresponding to a container in ECR.' | true |
 | severity | string | 'CRITICAL,HIGH' | 'Severities of vulnerabilities to be scanned for and displayed (UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL)' | false |
 | skip-dirs | string | '' | 'Comma separated list of directories where traversal is skipped' | false |
@@ -152,6 +156,7 @@ This workflow has 2 runtime options. The first option is to tag an *existing* co
 | existing-image-tag | string |  | 'Image tag of existing container in ECR (not used if build-new-container=true).'  | true |
 | exit-code | string | '0' | 'Exit code when specified vulnerabilities are found (0).' | false |
 | ignore-unfixed | boolean | false | 'Ignore unpatched/unfixed vulnerabilities' | false |
+| limit-severities-for-sarif | boolean | true | 'By default SARIF format enforces output of all vulnerabilities regardless of configured severities. To override this behavior set this parameter to true' | false |
 | microservice_name | string |  | 'Name of microservice corresponding to a container in ECR.' | true |
 | severity | string | 'CRITICAL,HIGH' | 'Severities of vulnerabilities to be scanned for and displayed (UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL)' | false |
 | skip-dirs | string | '' | 'Comma separated list of directories where traversal is skipped' | false |
@@ -183,6 +188,7 @@ This workflow builds a container and scans it for security vulnerabilities using
 | dockerfile_relative_path | string |  | 'Relative path to dockerfile being built (use '-f' docker argument if the dockerfile referenced from the root directory).' | true |
 | exit-code | string | '0' | 'Exit code when specified vulnerabilities are found (0).' | false |
 | ignore-unfixed | boolean | false | 'Ignore unpatched/unfixed vulnerabilities' | false |
+| limit-severities-for-sarif | boolean | true | 'By default SARIF format enforces output of all vulnerabilities regardless of configured severities. To override this behavior set this parameter to true' | false |
 | microservice_name | string |  | 'Name of microservice corresponding to a container in ECR.' | true |
 | severity | string | 'CRITICAL,HIGH' | 'Severities of vulnerabilities to be scanned for and displayed (UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL)' | false |
 | skip-dirs | string | '' | 'Comma separated list of directories where traversal is skipped' | false |

@@ -10,7 +10,12 @@ inputs:
     description: 'Severities of vulnerabilities to be scanned for and displayed (UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL)'
     required: false  
     default: 'CRITICAL,HIGH'
-    type: string 
+    type: string
+  limit-severities-for-sarif:
+    description: 'By default SARIF format enforces output of all vulnerabilities regardless of configured severities. To override this behavior set this parameter to true'
+    required: false  
+    default: true
+    type: boolean 
   upload-to-github-security-tab:
     description: 'Upload results to GitHub security tab?'
     required: false
@@ -76,6 +81,7 @@ runs:
         severity: ${{inputs.severity}}
         timeout: ${{inputs.timeout}}
         trivyignores: ${{inputs.trivyignores}}
+        limit-severities-for-sarif: ${{inputs.limit-severities-for-sarif}}
 
     - name: Upload Trivy scan results to GitHub Security tab
       if: ${{ inputs.upload-to-github-security-tab == 'true' }}
