@@ -138,7 +138,7 @@ jobs:
         echo "CONTAINER_TAG=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
       
     - name: Scan container image
-      uses: CDCgov/NEDSS-Workflows/.github/actions/trivy-scanner@CNPT-1494-trivy-action
+      uses: CDCgov/NEDSS-Workflows/.github/actions/trivy-scanner@main
       with:
         container-ref: ${{ env.CONTAINER_TAG }}
         severity: ${{ inputs.severity }}
