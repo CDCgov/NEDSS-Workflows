@@ -17,9 +17,9 @@ inputs:
     default: false
     type: boolean
   ignore-unfixed:
-    description: Ignore unpatched/unfixed vulnerabilities
+    description: 'Ignore unpatched/unfixed vulnerabilities'
     required: false
-    default: true
+    default: false
     type: boolean 
   skip-dirs:
     description: 'Comma separated list of directories where traversal is skipped'
