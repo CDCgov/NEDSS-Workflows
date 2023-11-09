@@ -2,6 +2,7 @@ name: Build and store a microservice container
 on:
   workflow_call:
     inputs:
+      # container build inputs
       microservice_name:
         description: "Name of microservice corresponding to a container in ECR."
         required: true
@@ -13,7 +14,52 @@ on:
       environment_classifier:
         description: Metadata to append to application version. Ex. if version=1.0.0, and environment_classifier=SNAPSHOT result will be 1.0.0-SNAPSHOT.<githubsha>.
         required: true
-        type: string      
+        type: string
+      # Container scanning inputs   
+      severity:
+        description: 'Severities of vulnerabilities to be scanned for and displayed (UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL)'
+        required: false  
+        default: 'CRITICAL,HIGH'
+        type: string
+      limit-severities-for-sarif:
+        description: 'By default SARIF format enforces output of all vulnerabilities regardless of configured severities. To override this behavior set this parameter to true'
+        required: false  
+        default: true
+        type: boolean 
+      upload-to-github-security-tab:
+        description: 'Upload results to GitHub security tab?'
+        required: false
+        default: true
+        type: boolean
+      ignore-unfixed:
+        description: Ignore unpatched/unfixed vulnerabilities
+        required: false
+        default: false
+        type: boolean 
+      skip-dirs:
+        description: 'Comma separated list of directories where traversal is skipped'
+        required: false 
+        default: ''
+        type: string
+      skip-files:
+        description: 'Comma separated list of files where traversal is skipped'
+        required: false  
+        default: ''
+        type: string
+      timeout:
+        description: 'Scan timeout duration'
+        required: false  
+        default: '10m0s'
+        type: string
+      exit-code:
+        description: 'Exit code when specified vulnerabilities are found (0).'
+        required: false  
+        default: '0'
+        type: string
+      trivyignores:
+        description: 'Comma-separated list of relative paths in repository to one or more .trivyignore files, for usage see https://aquasecurity.github.io/trivy/v0.19.2/vulnerability/examples/filter/'
+        required: false         
+        type: string   
     secrets:
       CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID:
         description: "Secret named CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID where ECR resides."
@@ -23,13 +69,13 @@ on:
         required: true
       GIT_USER_EMAIL:
         description: "Secret named GIT_USER_EMAIL for the CI user email."
-        required: true
+        required: false
       GIT_USER_NAME:
         description: "Secret named ECR_REPO_BASE_NAME for the CI user name."
-        required: true
+        required: false
       HELM_TOKEN:
         description: "Secret named HELM_TOKEN to access helm chart repository"
-        required: true
+        required: false
     outputs:
       output_image_tag:
         description: "Container image tag" 
@@ -47,6 +93,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
+      security-events: write
 
     steps:
     - name: Checkout
@@ -73,7 +120,7 @@ jobs:
       run: echo "output_image_tag=${{ env.new_image_tag }}" >> $GITHUB_OUTPUT
 
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
+      uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: "arn:aws:iam::${{ secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID }}:role/cdc-github-${{ env.github_repo_name }}-dev-role"
         role-session-name: deploy-infrastructure
@@ -81,17 +128,41 @@ jobs:
 
     - name: Login to Amazon ECR
       id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
+      uses: aws-actions/amazon-ecr-login@v2
 
-    - name: Build, tag, and push ${{ inputs.microservice_name }} image to Amazon ECR
+    - name: Build and tag ${{ inputs.microservice_name }} image 
       id: build-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: ${{ secrets.ECR_REPO_BASE_NAME }}/${{ inputs.microservice_name }}
         IMAGE_TAG: "${{ env.new_image_tag }}"
       run: |
-        # Build a docker container and push it to ECR 
+        # Build a docker container
+        echo "Building image.." 
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ${{ inputs.dockerfile_relative_path}}
+        echo "CONTAINER_TAG=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
+      
+    - name: Scan container image
+      uses: CDCgov/NEDSS-Workflows/.github/actions/trivy-scanner@main
+      with:
+        container-ref: ${{ env.CONTAINER_TAG }}
+        severity: ${{ inputs.severity }}
+        upload-to-github-security-tab: ${{ inputs.upload-to-github-security-tab }}
+        ignore-unfixed: ${{ inputs.ignore-unfixed }}
+        skip-dirs: ${{ inputs.skip-dirs }}
+        skip-files: ${{ inputs.skip-files }}
+        exit-code: ${{ inputs.exit-code }}
+        trivyignores: ${{ inputs.trivyignores }}
+        limit-severities-for-sarif: ${{inputs.limit-severities-for-sarif}}
+       
+    - name: Push ${{ inputs.microservice_name }} image to Amazon ECR
+      id: push-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ secrets.ECR_REPO_BASE_NAME }}/${{ inputs.microservice_name }}
+        IMAGE_TAG: "${{ env.new_image_tag }}"
+      run: |
         echo "Pushing image to ECR..."
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
