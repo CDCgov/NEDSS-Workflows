@@ -43,7 +43,7 @@ on:
       GIT_USER_NAME:
         description: "Secret named ECR_REPO_BASE_NAME for the CI user name."
         required: true
-      GIT_USER_TOKEN:
+      GIT_REPO_TOKEN:
         description: Pass GitHub Token to allow for release creation.
         required: true
 
@@ -122,7 +122,7 @@ jobs:
     - name: Create Draft Release
       if: ${{ inputs.update_zip_only == 'false' }}
       with:
-        GITHUB_TOKEN: ${{ secrets.GIT_USER_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GIT_REPO_TOKEN }}
       run: |
         gh release create ${{env.final_release_tag}} --draft --target ${{env.final_release_branch_name}}
         gh release upload ${{env.final_release_tag}} ${{env.final_artifact_name}}        
@@ -130,7 +130,7 @@ jobs:
     - name: Update Artifact in existing Draft Release
       if: ${{ inputs.update_zip_only == 'true' }}
       with:
-        GITHUB_TOKEN: ${{ secrets.GIT_USER_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GIT_REPO_TOKEN }}
       run: |
         # Upload artifact, overwrite existing artifact in Draft only
         check_tag=${{env.final_release_tag}}
