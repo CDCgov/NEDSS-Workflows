@@ -127,7 +127,7 @@ jobs:
           gh release create ${{env.final_release_tag}} --draft --target ${{env.final_release_branch_name}} --generate-notes
         else
           echo "Generating release notes from inputs"
-          gh release create ${{env.final_release_tag}} --draft --target ${{env.final_release_branch_name}} --notes $local_body
+          gh release create ${{env.final_release_tag}} --draft --target ${{env.final_release_branch_name}} --notes "$local_body"
         fi
 
 
