@@ -114,7 +114,7 @@ jobs:
         # cd zipping_directory        
         for i in "${list_paths_to_copy[@]}"
         do
-          cp --parents -r ../$i ./zipping_directory
+          cp --parents -r $i ./zipping_directory
         done
         # Delete excluded files from working directory
         for d in "${list_paths_to_remove[@]}"        
