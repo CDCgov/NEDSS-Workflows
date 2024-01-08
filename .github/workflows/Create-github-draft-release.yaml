@@ -103,6 +103,7 @@ jobs:
         list_paths_to_remove=""
         if ["$local_excluded_paths" != ""]
         then
+          echo "Excluded paths found."
           list_paths_to_remove=$(echo $local_excluded_paths | sed 's/,/ /g')
         fi
 
@@ -112,10 +113,8 @@ jobs:
         # cd zipping_directory
         if ["$list_paths_to_remove" != ""]
         then
-          echo "Excluded paths found."
           zip -r ${{env.final_artifact_name}} $list_paths_to_copy -x $list_paths_to_remove
-        else
-          echo "Excluded paths NOT found."
+        else          
           zip -r ${{env.final_artifact_name}} $list_paths_to_copy
         fi
 
