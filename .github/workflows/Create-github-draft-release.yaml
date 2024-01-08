@@ -117,8 +117,8 @@ jobs:
           cp --parents -r $i ./zipping_directory
         done
         # Delete excluded files from working directory
-        for d in "${list_paths_to_remove[@]}"        
-          echo "removing $d"
+        for d in "${list_paths_to_remove[@]}"
+        do
           rm -r ./zipping_directory/$d
         done
         cd zipping_directory
