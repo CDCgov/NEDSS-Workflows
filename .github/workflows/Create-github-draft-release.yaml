@@ -7,10 +7,6 @@ on:
         type: boolean
         default: false
         required: true
-      # reference_prefix:
-      #   description: The reference tag or branch from which the new release branch should be created.
-      #   type: string
-      #   required: tr
       body:
         description: A description of your release in markdown format (default is to autogenerate release notes).
         type: string
@@ -127,8 +123,10 @@ jobs:
         # If local body is empty autogenerate release notes, otherwise use body
         if [ -z "$local_body" ]
         then
+          echo "Autogenerating release notes"
           gh release create ${{env.final_release_tag}} --draft --target ${{env.final_release_branch_name}} --generate-notes
         else
+          echo "Generating release notes from inputs"
           gh release create ${{env.final_release_tag}} --draft --target ${{env.final_release_branch_name}} --notes $local_body
         fi
 
