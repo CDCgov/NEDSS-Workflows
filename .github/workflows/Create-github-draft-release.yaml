@@ -96,7 +96,6 @@ jobs:
     - name: Create artifact from Release Branch
       run: |
         # Generate zipfile
-        home_dir=$(pwd)
         local_paths=${{inputs.paths}}
         local_excluded_paths=${{inputs.excluded_paths}}
         mkdir zipping_directory
