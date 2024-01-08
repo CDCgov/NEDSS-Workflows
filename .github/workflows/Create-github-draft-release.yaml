@@ -122,7 +122,17 @@ jobs:
     - name: Create Draft Release
       if: ${{ inputs.update_zip_only == false }}
       run: |
-        gh release create ${{env.final_release_tag}} --draft --target ${{env.final_release_branch_name}}
+        local_body="${{inputs.body}}"
+        
+        # If local body is empty autogenerate release notes, otherwise use body
+        if [ -z "$local_body" ]
+        then
+          gh release create ${{env.final_release_tag}} --draft --target ${{env.final_release_branch_name}} --generate-notes
+        else
+          gh release create ${{env.final_release_tag}} --draft --target ${{env.final_release_branch_name}} --notes $local_body
+        fi
+
+
         gh release upload ${{env.final_release_tag}} ${{env.final_artifact_name}}
       env:
         GH_TOKEN: ${{ github.token }}
