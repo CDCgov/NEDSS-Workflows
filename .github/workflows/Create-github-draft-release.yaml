@@ -89,6 +89,7 @@ jobs:
         git config --global user.email  ${{ secrets.GIT_USER_EMAIL }}
 
         # Create and push release branch
+        git pull
         git checkout -b ${{env.final_release_branch_name}}
         git push --set-upstream origin ${{env.final_release_branch_name}}
 
