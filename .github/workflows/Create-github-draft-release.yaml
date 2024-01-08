@@ -117,8 +117,8 @@ jobs:
           cp --parents -r ../$i ./
         done
         # Delete excluded files from working directory
-        for d in "${list_paths_to_remove[@]}"
-        do
+        for d in "${list_paths_to_remove[@]}"        
+          echo "removing $d"
           rm -r $d
         done
         
