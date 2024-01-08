@@ -122,7 +122,7 @@ jobs:
         # done
         
         # cd zipping_directory
-        if [$list_paths_to_remove!=""]
+        if [$list_paths_to_remove != ""]
         then
           echo "Excluded paths found."
           zip -r ${{env.final_artifact_name}} $list_paths_to_copy -x $list_paths_to_remove
@@ -137,7 +137,7 @@ jobs:
         gh release create ${{env.final_release_tag}} --draft --target ${{env.final_release_branch_name}}
         gh release upload ${{env.final_release_tag}} ${{env.final_artifact_name}}
       env:
-        GH_TOKEN: ${{ secrets.GIT_REPO_TOKEN }}
+        GH_TOKEN: ${{ github.token }}
       
     - name: Update Artifact in existing Draft Release
       if: ${{ inputs.update_zip_only == true }}
@@ -154,7 +154,7 @@ jobs:
           echo 'Tag ${{env.final_release_tag}} is not in draft mode! Edits must be MANUAL!'
         fi
       env:
-        GH_TOKEN: ${{ secrets.GIT_REPO_TOKEN }}
+        GH_TOKEN: ${{ github.token }}
       
 
       
