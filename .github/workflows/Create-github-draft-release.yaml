@@ -40,10 +40,6 @@ on:
       GIT_USER_NAME:
         description: "Secret named ECR_REPO_BASE_NAME for the CI user name."
         required: true
-      GIT_REPO_TOKEN:
-        description: Pass GitHub Token to allow for release creation.
-        required: true
-
 
 jobs:
   build:
@@ -92,47 +88,31 @@ jobs:
     # TODO
     - name: Create artifact from Release Branch
       run: |
-        # Generate zipfile
-        
+        # Generate zipfile        
         local_paths="${{inputs.paths}}"        
-        local_excluded_paths="${{inputs.excluded_paths}}"      
-        # list_paths_to_copy=$(echo $local_paths | sed 's/,/ /g')
-        # list_paths_to_remove=""
-        # if [ ! -z "$local_excluded_paths" ]
-        # then
-        #   echo "Excluded paths found."
-        #   list_paths_to_remove=$(echo $local_excluded_paths | sed 's/,/ /g')
-        # fi
-
-        # echo "Paths to copy: $list_paths_to_copy"
-        # echo "Excluded paths: $list_paths_to_remove"
+        local_excluded_paths="${{inputs.excluded_paths}}"  
 
         list_paths_to_copy=($(echo $local_paths | tr , "\n"))
         list_paths_to_remove=($(echo $local_excluded_paths | tr , "\n"))
-        # Copy files to working directory, preserving file structure
+
         mkdir zipping_directory
-        # cd zipping_directory        
+        # Copy files to working directory, preserving file structure        
         for i in "${list_paths_to_copy[@]}"
         do
           cp --parents -r $i ./zipping_directory
         done
+
         # Delete excluded files from working directory
         for d in "${list_paths_to_remove[@]}"
         do
           rm -r ./zipping_directory/$d
         done
 
+        # zip files and copy to correct location
         cd zipping_directory
         zip -r ${{env.final_artifact_name}} ./
         cp ${{env.final_artifact_name}} ../
 
-        # cd zipping_directory
-        # if [ ! -z "$list_paths_to_remove" ]
-        # then
-        #   zip -r ${{env.final_artifact_name}} $list_paths_to_copy -x $list_files_to_remove
-        # else          
-        #   zip -r ${{env.final_artifact_name}} $list_paths_to_copy
-        # fi
 
     - name: Create Draft Release
       if: ${{ inputs.update_zip_only == false }}
@@ -149,7 +129,6 @@ jobs:
           gh release create ${{env.final_release_tag}} --draft --target ${{env.final_release_branch_name}} --notes "$local_body"
         fi
 
-
         gh release upload ${{env.final_release_tag}} ${{env.final_artifact_name}}
       env:
         GH_TOKEN: ${{ github.token }}
@@ -159,9 +138,11 @@ jobs:
       run: |
         # Upload artifact, overwrite existing artifact in Draft only
         check_tag=${{env.final_release_tag}}
+        
         # Check if draft
         isDraft=$(gh release view $check_tag --json isDraft | awk -F':' '{print $2}' | awk -F'}' '{print $1}' | tr -d '"')  
         echo "$isDraft"
+        
         # isDraft==true, then upload
         if [ "$isDraft" == "true" ]
         then
