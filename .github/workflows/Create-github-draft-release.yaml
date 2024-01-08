@@ -1,6 +1,6 @@
 name: Create GitHub Draft Release
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       update_zip_only:
         description: Will delete and update the artifact from an existing draft release.
