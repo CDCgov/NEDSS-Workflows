@@ -111,17 +111,17 @@ jobs:
         list_paths_to_remove=($(echo $local_excluded_paths | tr , "\n"))
         # Copy files to working directory, preserving file structure
         mkdir zipping_directory
-        cd zipping_directory        
+        # cd zipping_directory        
         for i in "${list_paths_to_copy[@]}"
         do
-          cp --parents -r ../$i ./
+          cp --parents -r ../$i ./zipping_directory
         done
         # Delete excluded files from working directory
         for d in "${list_paths_to_remove[@]}"        
           echo "removing $d"
-          rm -r ./$d
+          rm -r ./zipping_directory/$d
         done
-        
+        cd zipping_directory
         zip -r ${{env.final_artifact_name}} ./
         cp ${{env.final_artifact_name}} ../
 
