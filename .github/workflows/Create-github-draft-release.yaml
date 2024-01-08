@@ -96,9 +96,11 @@ jobs:
     - name: Create artifact from Release Branch
       run: |
         # Generate zipfile
+        echo "Get included paths"
         local_paths=${{inputs.paths}}
+        echo "Get excluded paths"
         local_excluded_paths=${{inputs.excluded_paths}}
-        mkdir zipping_directory
+        # mkdir zipping_directory
         list_paths_to_copy=$(echo $local_paths | sed 's/,/ /g')
         list_paths_to_remove=$(echo $local_excluded_paths | sed 's/,/ /g')
 
