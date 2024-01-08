@@ -62,9 +62,6 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
-    # Placeholder for creating .zip
-    # - name: Create Release Artifact
-
     - name: Set Variables
       run: |
         # Set release branch name
@@ -99,23 +96,25 @@ jobs:
         # Generate zipfile
         home_dir=$(pwd)
         mkdir zipping_directory
-        list_paths_to_copy=($(echo $paths | tr , "\n"))
-        list_paths_to_remove=($(echo $excluded_paths | tr , "\n"))
+        list_paths_to_copy=$(echo $paths | sed 's/,/ /g')
+        list_paths_to_remove=$(echo $excluded_paths | sed 's/,/ /g')
+        # list_paths_to_copy=($(echo $paths | tr , "\n"))
+        # list_paths_to_remove=($(echo $excluded_paths | tr , "\n"))
 
-        # Copy files to working directory, preserving file structure
-        for i in "${list_paths_to_copy[@]}"
-        do
-          cp --parents -r ../$i zipping_directory
-        done
+        # # Copy files to working directory, preserving file structure
+        # for i in "${list_paths_to_copy[@]}"
+        # do
+        #   cp --parents -r ../$i zipping_directory
+        # done
 
-        # Delete excluded files from working directory
-        for i in "${list_paths_to_copy[@]}"
-        do
-          rm -R zipping_directory/$i
-        done
+        # # Delete excluded files from working directory
+        # for i in "${list_paths_to_copy[@]}"
+        # do
+        #   rm -R zipping_directory/$i
+        # done
         
         cd zipping_directory
-        zip ${{env.final_artifact_name}} *
+        zip -r ${{env.final_artifact_name}} list_paths_to_copy -x list_paths_to_remove
 
     - name: Create Draft Release
       if: ${{ inputs.update_zip_only == 'false' }}
