@@ -99,9 +99,8 @@ jobs:
         # Generate zipfile
         home_dir=$(pwd)
         mkdir zipping_directory
-        #list_paths_to_copy=(echo $paths | tr , "\n" | awk -F ' ' '{print $1}')
         list_paths_to_copy=($(echo $paths | tr , "\n"))
-        list_paths_to_remove=(echo $excluded_paths | tr , "\n" | awk -F ' ' '{print $1}')
+        list_paths_to_remove=($(echo $excluded_paths | tr , "\n"))
 
         # Copy files to working directory, preserving file structure
         for i in "${list_paths_to_copy[@]}"
@@ -117,7 +116,6 @@ jobs:
         
         cd zipping_directory
         zip ${{env.final_artifact_name}} *
-
 
     - name: Create Draft Release
       if: ${{ inputs.update_zip_only == 'false' }}
