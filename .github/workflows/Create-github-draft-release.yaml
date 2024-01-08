@@ -119,16 +119,14 @@ jobs:
 
     - name: Create Draft Release
       if: ${{ inputs.update_zip_only == 'false' }}
-      with:
-        GITHUB_TOKEN: ${{ secrets.GIT_REPO_TOKEN }}
       run: |
         gh release create ${{env.final_release_tag}} --draft --target ${{env.final_release_branch_name}}
-        gh release upload ${{env.final_release_tag}} ${{env.final_artifact_name}}        
-
-    - name: Update Artifact in existing Draft Release
-      if: ${{ inputs.update_zip_only == 'true' }}
+        gh release upload ${{env.final_release_tag}} ${{env.final_artifact_name}}
       with:
         GITHUB_TOKEN: ${{ secrets.GIT_REPO_TOKEN }}
+      
+    - name: Update Artifact in existing Draft Release
+      if: ${{ inputs.update_zip_only == 'true' }}
       run: |
         # Upload artifact, overwrite existing artifact in Draft only
         check_tag=${{env.final_release_tag}}
@@ -141,5 +139,8 @@ jobs:
         else
           echo 'Tag ${{env.final_release_tag}} is not in draft mode! Edits must be MANUAL!'
         fi
+      with:
+        GITHUB_TOKEN: ${{ secrets.GIT_REPO_TOKEN }}
+      
 
       
