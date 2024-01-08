@@ -97,11 +97,11 @@ jobs:
       run: |
         # Generate zipfile
         home_dir=$(pwd)
-        paths=${{inputs.paths}}
-        excluded_paths=${{inputs.excluded_paths}}
+        local_paths=${{inputs.paths}}
+        local_excluded_paths=${{inputs.excluded_paths}}
         mkdir zipping_directory
-        list_paths_to_copy=$(echo $paths | sed 's/,/ /g')
-        list_paths_to_remove=$(echo $excluded_paths | sed 's/,/ /g')
+        list_paths_to_copy=$(echo $local_paths | sed 's/,/ /g')
+        list_paths_to_remove=$(echo $local_excluded_paths | sed 's/,/ /g')
 
         echo "Paths to copy: $list_paths_to_copy"
         echo "Excluded paths: $list_paths_to_remove"
@@ -130,7 +130,7 @@ jobs:
         fi
 
     - name: Create Draft Release
-      if: ${{ inputs.update_zip_only == 'false' }}
+      if: ${{ inputs.update_zip_only == false }}
       run: |
         gh release create ${{env.final_release_tag}} --draft --target ${{env.final_release_branch_name}}
         gh release upload ${{env.final_release_tag}} ${{env.final_artifact_name}}
@@ -138,7 +138,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GIT_REPO_TOKEN }}
       
     - name: Update Artifact in existing Draft Release
-      if: ${{ inputs.update_zip_only == 'true' }}
+      if: ${{ inputs.update_zip_only == true }}
       run: |
         # Upload artifact, overwrite existing artifact in Draft only
         check_tag=${{env.final_release_tag}}
