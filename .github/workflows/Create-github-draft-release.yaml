@@ -121,6 +121,7 @@ jobs:
         do
           rm -r ./zipping_directory/$d
         done
+
         cd zipping_directory
         zip -r ${{env.final_artifact_name}} ./
         cp ${{env.final_artifact_name}} ../
@@ -160,9 +161,10 @@ jobs:
         check_tag=${{env.final_release_tag}}
         # Check if draft
         isDraft=$(gh release view $check_tag --json isDraft | awk -F':' '{print $2}' | awk -F'}' '{print $1}' | tr -d '"')  
-
+        echo "$isDraft"
         # isDraft==true, then upload
         if [$isDraft=='true']
+        then
           gh release upload ${{env.final_release_tag}} ${{env.final_artifact_name}} --clobber
         else
           echo 'Tag ${{env.final_release_tag}} is not in draft mode! Edits must be MANUAL!'
