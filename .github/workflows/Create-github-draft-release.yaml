@@ -81,7 +81,7 @@ jobs:
         echo "final_artifact_name=$final_artifact_name" >> $GITHUB_ENV 
 
     - name: Create Release Branch from main
-      if: ${{ inputs.update_zip_only == 'false' }}
+      if: ${{ inputs.update_zip_only == false }}
       run: |
         # Configure GitHub user
         git config --global user.name ${{ secrets.GIT_USER_NAME }}
@@ -121,8 +121,10 @@ jobs:
         
         # cd zipping_directory
         if [$list_paths_to_remove!=""]
+          echo "Excluded paths found."
           zip -r ${{env.final_artifact_name}} $list_paths_to_copy -x $list_paths_to_remove
         else
+          echo "Excluded paths NOT found."
           zip -r ${{env.final_artifact_name}} $list_paths_to_copy
         fi
 
