@@ -98,6 +98,9 @@ jobs:
         mkdir zipping_directory
         list_paths_to_copy=$(echo $paths | sed 's/,/ /g')
         list_paths_to_remove=$(echo $excluded_paths | sed 's/,/ /g')
+
+        echo "Paths to copy: $list_paths_to_copy"
+        echo "Excluded paths: $list_paths_to_remove"
         # list_paths_to_copy=($(echo $paths | tr , "\n"))
         # list_paths_to_remove=($(echo $excluded_paths | tr , "\n"))
 
@@ -114,7 +117,7 @@ jobs:
         # done
         
         cd zipping_directory
-        zip -r ${{env.final_artifact_name}} list_paths_to_copy -x list_paths_to_remove
+        zip -r ${{env.final_artifact_name}} $list_paths_to_copy -x $list_paths_to_remove
 
     - name: Create Draft Release
       if: ${{ inputs.update_zip_only == 'false' }}
