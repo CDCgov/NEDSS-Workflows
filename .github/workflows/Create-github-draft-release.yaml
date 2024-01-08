@@ -107,8 +107,8 @@ jobs:
         # echo "Paths to copy: $list_paths_to_copy"
         # echo "Excluded paths: $list_paths_to_remove"
 
-        list_paths_to_copy=($(echo $paths | tr , "\n"))
-        list_paths_to_remove=($(echo $excluded_paths | tr , "\n"))
+        list_paths_to_copy=($(echo $local_paths | tr , "\n"))
+        list_paths_to_remove=($(echo $local_excluded_paths | tr , "\n"))
         # Copy files to working directory, preserving file structure
         mkdir zipping_directory
         cd zipping_directory        
@@ -119,7 +119,7 @@ jobs:
         # Delete excluded files from working directory
         for d in "${list_paths_to_remove[@]}"        
           echo "removing $d"
-          rm -r $d
+          rm -r ./$d
         done
         
         zip -r ${{env.final_artifact_name}} ./
