@@ -78,7 +78,7 @@ jobs:
         echo "final_release_name=$final_release_name" >> $GITHUB_ENV
 
         # Set artifact name
-        final_artifact_name='${{inputs.artifact_base_name}}-v${{inputs.release_version}}'
+        final_artifact_name='${{inputs.artifact_base_name}}-v${{inputs.release_version}}.zip'
         echo "final_artifact_name=$final_artifact_name" >> $GITHUB_ENV 
 
     - name: Create Release Branch from main
