@@ -35,6 +35,7 @@ on:
       excluded_paths:
         description: A CSV list detailing specific files and directories to exclude from the provided paths (this variable serves only to limit scope of the paths variable).
         type: string
+        default: ""
         required: false
     secrets:
       GIT_USER_EMAIL:
@@ -95,6 +96,8 @@ jobs:
       run: |
         # Generate zipfile
         home_dir=$(pwd)
+        paths=${{inputs.paths}}
+        excluded_paths=${{inputs.excluded_paths}}
         mkdir zipping_directory
         list_paths_to_copy=$(echo $paths | sed 's/,/ /g')
         list_paths_to_remove=$(echo $excluded_paths | sed 's/,/ /g')
@@ -116,8 +119,12 @@ jobs:
         #   rm -R zipping_directory/$i
         # done
         
-        cd zipping_directory
-        zip -r ${{env.final_artifact_name}} $list_paths_to_copy -x $list_paths_to_remove
+        # cd zipping_directory
+        if [$list_paths_to_remove!=""]
+          zip -r ${{env.final_artifact_name}} $list_paths_to_copy -x $list_paths_to_remove
+        else
+          zip -r ${{env.final_artifact_name}} $list_paths_to_copy
+        fi
 
     - name: Create Draft Release
       if: ${{ inputs.update_zip_only == 'false' }}
