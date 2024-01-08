@@ -168,6 +168,7 @@ jobs:
           gh release upload ${{env.final_release_tag}} ${{env.final_artifact_name}} --clobber
         else
           echo 'Tag ${{env.final_release_tag}} is not in draft mode! Edits must be MANUAL!'
+          exit(1)
         fi
       env:
         GH_TOKEN: ${{ github.token }}
