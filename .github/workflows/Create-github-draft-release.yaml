@@ -119,7 +119,7 @@ jobs:
         # Delete excluded files from working directory
         for i in "${list_paths_to_copy[@]}"
         do
-          rm -R zipping_directory/$i
+          rm -r $i
         done
         
         zip -r ${{env.final_artifact_name}} ./
