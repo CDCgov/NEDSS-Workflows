@@ -1,0 +1,147 @@
+name: Create GitHub Draft Release
+on:
+  workflow_dispatch:
+    inputs:
+      update_zip_only:
+        description: Will delete and update the artifact from an existing draft release.
+        type: boolean
+        default: false
+        required: true
+      # reference_prefix:
+      #   description: The reference tag or branch from which the new release branch should be created.
+      #   type: string
+      #   required: tr
+      body:
+        description: A description of your release in markdown format (default is to autogenerate release notes).
+        type: string
+        required: false
+      release_version:
+        description: A release version (no 'v', this is added only to the final) to be created upon publishing the draft release (tag must not already exist in repository).
+        type: string
+        required: true
+      release_name:
+        description: Provide a custom name for your release. If none is provided the release name will match the provided release_version.
+        type: string
+        default: "NONE"
+        required: false
+      artifact_base_name:
+        description: Base name of the created artifact. The release version is appended to this name.
+        type: string
+        required: false
+      paths:
+        description: A CSV string detailing which files and directories should be included in the artifact. If not provided only the standard artifacts will be created.
+        type: string
+        required: false
+      excluded_paths:
+        description: A CSV list detailing specific files and directories to exclude from the provided paths (this variable serves only to limit scope of the paths variable).
+        type: string
+        required: false
+    secrets:
+      GIT_USER_EMAIL:
+        description: "Secret named GIT_USER_EMAIL for the CI user email."
+        required: true
+      GIT_USER_NAME:
+        description: "Secret named ECR_REPO_BASE_NAME for the CI user name."
+        required: true
+      GIT_USER_TOKEN:
+        description: Pass GitHub Token to allow for release creation.
+        required: true
+
+
+jobs:
+  build:
+    name: Release from branch
+    runs-on: ubuntu-latest
+
+    #token permissions
+    permissions:
+      id-token: write
+      contents: read      
+ 
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    # Placeholder for creating .zip
+    # - name: Create Release Artifact
+
+    - name: Set Variables
+      run: |
+        # Set release branch name
+        final_release_branch_name='release-${{inputs.release_version}}'
+        echo "final_release_branch_name=$final_release_branch_name" >> $GITHUB_ENV
+
+        # Set release tag and release name
+        final_release_tag='v${{inputs.release_version}}'
+        final_release_name=''
+        if [ ${{inputs.release_name}} == 'NONE' ]; then final_release_name='$final_release_tag'; else final_release_name='${{inputs.release_name}}'; fi
+        echo "final_release_tag=$final_release_tag" >> $GITHUB_ENV
+        echo "final_release_name=$final_release_name" >> $GITHUB_ENV
+
+        # Set artifact name
+        final_artifact_name='${{inputs.artifact_base_name}}-v${{release_version}}'
+        echo "final_artifact_name=$final_artifact_name" >> $GITHUB_ENV 
+
+    - name: Create Release Branch from main
+      if: ${{ inputs.update_zip_only == 'false' }}
+      run: |
+        # Configure GitHub user
+        git config --global user.name ${{ secrets.GIT_USER_NAME }}
+        git config --global user.email  ${{ secrets.GIT_USER_EMAIL }}
+
+        # Create and push release branch
+        git checkout -b ${{env.final_release_branch_name}}
+        git push --set-upstream origin ${{env.final_release_branch_name}}
+
+    # TODO
+    - name: Create artifact from Release Branch
+      run: |
+        # Generate zipfile
+        home_dir=$(pwd)
+        mkdir zipping_directory
+        #list_paths_to_copy=(echo $paths | tr , "\n" | awk -F ' ' '{print $1}')
+        list_paths_to_copy=($(echo $paths | tr , "\n"))
+        list_paths_to_remove=(echo $excluded_paths | tr , "\n" | awk -F ' ' '{print $1}')
+
+        # Copy files to working directory, preserving file structure
+        for i in "${list_paths_to_copy[@]}"
+        do
+          cp --parents -r ../$i zipping_directory
+        done
+
+        # Delete excluded files from working directory
+        for i in "${list_paths_to_copy[@]}"
+        do
+          rm -R zipping_directory/$i
+        done
+        
+        cd zipping_directory
+        zip ${{env.final_artifact_name}} *
+
+
+    - name: Create Draft Release
+      if: ${{ inputs.update_zip_only == 'false' }}
+      with:
+        GITHUB_TOKEN: ${{ secrets.GIT_USER_TOKEN }}
+      run: |
+        gh release create ${{env.final_release_tag}} --draft --target ${{env.final_release_branch_name}}
+        gh release upload ${{env.final_release_tag}} ${{env.final_artifact_name}}        
+
+    - name: Update Artifact in existing Draft Release
+      if: ${{ inputs.update_zip_only == 'true' }}
+      with:
+        GITHUB_TOKEN: ${{ secrets.GIT_USER_TOKEN }}
+      run: |
+        # Upload artifact, overwrite existing artifact in Draft only
+        check_tag=${{env.final_release_tag}}
+        # Check if draft
+        isDraft=$(gh release view $check_tag --json isDraft | awk -F':' '{print $2}' | awk -F'}' '{print $1}' | tr -d '"')  
+
+        # isDraft==true, then upload
+        if [$isDraft=='true']
+          gh release upload ${{env.final_release_tag}} ${{env.final_artifact_name}} --clobber
+        else
+          echo 'Tag ${{env.final_release_tag}} is not in draft mode! Edits must be MANUAL!'
+        fi
+
+      
