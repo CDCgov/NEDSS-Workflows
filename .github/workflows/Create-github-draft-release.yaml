@@ -16,7 +16,7 @@ on:
         type: string
         required: true
       release_name:
-        description: Provide a custom name for your release. If none is provided the release name will match the provided release_version.
+        description: Provide a custom name for your release. If none is provided the release name will match the provided release_version (default=NONE).
         type: string
         default: "NONE"
         required: false
@@ -96,24 +96,42 @@ jobs:
         
         local_paths="${{inputs.paths}}"        
         local_excluded_paths="${{inputs.excluded_paths}}"      
-        list_paths_to_copy=$(echo $local_paths | sed 's/,/ /g')
-        list_paths_to_remove=""
-        if [ ! -z "$local_excluded_paths" ]
-        then
-          echo "Excluded paths found."
-          list_paths_to_remove=$(echo $local_excluded_paths | sed 's/,/ /g')
-        fi
+        # list_paths_to_copy=$(echo $local_paths | sed 's/,/ /g')
+        # list_paths_to_remove=""
+        # if [ ! -z "$local_excluded_paths" ]
+        # then
+        #   echo "Excluded paths found."
+        #   list_paths_to_remove=$(echo $local_excluded_paths | sed 's/,/ /g')
+        # fi
 
-        echo "Paths to copy: $list_paths_to_copy"
-        echo "Excluded paths: $list_paths_to_remove"
+        # echo "Paths to copy: $list_paths_to_copy"
+        # echo "Excluded paths: $list_paths_to_remove"
+
+        list_paths_to_copy=($(echo $paths | tr , "\n"))
+        list_paths_to_remove=($(echo $excluded_paths | tr , "\n"))
+        # Copy files to working directory, preserving file structure
+        mkdir zipping_directory
+        cd zipping_directory        
+        for i in "${list_paths_to_copy[@]}"
+        do
+          cp --parents -r ../$i ./
+        done
+        # Delete excluded files from working directory
+        for i in "${list_paths_to_copy[@]}"
+        do
+          rm -R zipping_directory/$i
+        done
         
+        zip -r ${{env.final_artifact_name}} ./
+        cp ${{env.final_artifact_name}} ../
+
         # cd zipping_directory
-        if [ ! -z "$list_paths_to_remove" ]
-        then
-          zip -r ${{env.final_artifact_name}} $list_paths_to_copy -x $list_paths_to_remove
-        else          
-          zip -r ${{env.final_artifact_name}} $list_paths_to_copy
-        fi
+        # if [ ! -z "$list_paths_to_remove" ]
+        # then
+        #   zip -r ${{env.final_artifact_name}} $list_paths_to_copy -x $list_files_to_remove
+        # else          
+        #   zip -r ${{env.final_artifact_name}} $list_paths_to_copy
+        # fi
 
     - name: Create Draft Release
       if: ${{ inputs.update_zip_only == false }}
