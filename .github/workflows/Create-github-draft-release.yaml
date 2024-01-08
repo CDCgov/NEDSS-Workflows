@@ -163,7 +163,7 @@ jobs:
         isDraft=$(gh release view $check_tag --json isDraft | awk -F':' '{print $2}' | awk -F'}' '{print $1}' | tr -d '"')  
         echo "$isDraft"
         # isDraft==true, then upload
-        if [$isDraft=='true']
+        if [ "$isDraft" == "true" ]
         then
           gh release upload ${{env.final_release_tag}} ${{env.final_artifact_name}} --clobber
         else
