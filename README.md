@@ -1,8 +1,8 @@
 # NEDSS Reusable Workflows and custom GitHub actions
 ## Overview
-This repository is a central location for managing reusable workflows to be used in microservices developed as a part of the NBS modernization project for consistent CI/CD processes. GitHub Actions is the tool used to create these workflows which are intended to be adopted by any team who needs a container built and stored. 
+This repository is a central location for managing reusable workflows to be used in microservices developed as a part of the NBS modernization project for consistent CI/CD processes. GitHub Actions is the tool used to create these workflows which are intended to be adopted by any team who needs any of the services provided below. 
 
-## Prerequisites
+## Prerequisites for container related workflows
 1. Request your repository be granted access to the environment containing the Elastic Container Registry (ECR).
 2. Request and received confirmation that an ECR was created to store your artifact (microservice container image).
 
@@ -15,6 +15,7 @@ Reusable workflows are meant to be easily picked up and placed in your repositor
   - Note 1: This is a general template and a full list of variables can be found below.
   - Note 2: This template only references Build-other-microservice-container.yaml and the `uses` line for the call-build-microservice-container-workflow job should be changed to reflect the intended reusuable workflow.
 3. [Sample-call-trivy-container-scan.yaml](./sample_templates/Sample-call-trivy-container-scan.yaml) - this workflow is intended to be used when container scans are required in addition to those run automatically in the build and release workflows.
+4. [Create-github-draft-release.yaml](./workflows/Create-github-draft-release.yaml) - This workflow creates a draft release within GitHub and upload an artifact. In addition, there is an update only mode which will update the artifact in an existing draft release.
 
 
 
@@ -230,6 +231,37 @@ This workflow takes in an image tag and updates a supplied helm chart values.yam
 | GIT_USER_EMAIL | string |  | 'Secret named GIT_USER_EMAIL for the CI user email.' | true |
 | GIT_USER_NAME | string |  | 'Secret named ECR_REPO_BASE_NAME for the CI user name.' | true |
 | HELM_TOKEN | string |  | 'Secret named HELM_TOKEN to access helm chart repository' | true |
+
+#### Outputs
+None
+
+### [Create-github-draft-release.yaml](./workflows/Create-github-draft-release.yaml)
+This workflow creates a draft release and an artifact.
+
+#### Input Variables
+| Key | Type | Default | Description | Required |
+| -------------- | -------------- | -------------- | -------------- | -------------- |
+| dockerfile_relative_path | string |  | 'Relative path to dockerfile being built (use '-f' docker argument if the dockerfile referenced from the root directory).' | true |
+
+
+#### Input Variables
+| Key | Type | Default | Description | Required |
+| -------------- | -------------- | -------------- | -------------- | -------------- |
+| update_zip_only | boolean | false | 'Will delete and update the artifact from an existing draft release (contents depend on selected branch/tag).' | true |
+| body | string |  | 'A description of your release in markdown format (default is to autogenerate release notes).' | false |
+| release_version | string |  | 'A release version (no 'v', this is added only to the final) to be created upon publishing the draft release (tag must not already exist in repository).' | true |
+| release_name | string | "NONE" | 'Provide a custom name for your release. If none is provided the release name will match the provided release_version (default=NONE).' | false |
+| artifact_base_name | string |  | 'Base name of the created artifact. The artifact_release_version is appended to this name.' | true |
+| artifact_release_version | string |  | 'The artifact release version (no 'v', this is added only to the final).' | true |
+| paths | string |  | 'A CSV string detailing which files and directories should be included in the artifact. If not provided only the standard artifacts will be created.' | true |
+| excluded_paths | string | "" | 'A CSV list detailing specific files and directories to exclude from the provided paths (this variable serves only to limit scope of the paths variable).' | false |
+
+
+#### Input Secrets
+| Key | Type | Default | Description | Required |
+| -------------- | -------------- | -------------- | -------------- | -------------- |
+| GIT_USER_EMAIL | string |  | 'Secret named GIT_USER_EMAIL for the CI user email.' | true |
+| GIT_USER_NAME | string |  | 'Secret named ECR_REPO_BASE_NAME for the CI user name.' | true |
 
 #### Outputs
 None
