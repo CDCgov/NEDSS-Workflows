@@ -17,7 +17,10 @@ on:
       quay-image-tag:
         description: 'Quay.io image tag (could be same as in ECR)'
         required: true
-
+permissions:
+  id-token: write
+  contents: read
+  
 env:
   ACCOUNT_ID: ${{secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID}}
   REGION: ${{secrets.AWS_REGION}}
