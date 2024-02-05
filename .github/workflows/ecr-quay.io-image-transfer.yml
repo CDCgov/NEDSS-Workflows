@@ -21,6 +21,7 @@ on:
 env:
   ACCOUNT_ID: ${{secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID}}
   REGION: ${{secrets.AWS_REGION}}
+  github_repo_name: "NEDSS-Workflows"
 
 jobs:
   publish:
@@ -28,21 +29,21 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Docker
-        uses: docker/setup-docker@v2
+        uses: docker/setup-docker@v3
 
       - name: Configure AWS credentials from Test account
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: "arn:aws:iam::${{ env.accountid }}:role/cdc-github-${{ env.github_repo_name }}-dev-role"
+          role-to-assume: "arn:aws:iam::${{ env.ACCOUNT_ID }}:role/cdc-github-${{ env.github_repo_name }}-dev-role"
           role-session-name: migrate-containers
           aws-region: ${{env.REGION}}
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Pull image from ECR
         run: docker pull ${{ env.ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/${{inputs.ecr-image-repo}}:${{ inputs.ecr-image-tag }}
