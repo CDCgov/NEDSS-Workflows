@@ -47,8 +47,7 @@ jobs:
         run: docker pull ${{ env.accountid }}.dkr.ecr.us-east-1.amazonaws.com/${{inputs.ecr-image-repo}}:${{inputs.ecr-image-tag}}
 
       - name: Login to Quay.io with Robot Account
-        run: docker login -u="tukhi+github_test_robot_account" -p="UZZF7JHY6Y9VHYELGZG38W72O4E2Q42XG2RMF2FVXO8L4KPVPVFVFS3PXQPWWMMM" quay.io 
-        # docker login -u=${secret.QUAY_ROBOT_USERNAME} -p=${secret.QUAY_ROBOT_TOKEN} quay.io
+        run: docker login -u=${secret.QUAY_ROBOT_USERNAME} -p=${secret.QUAY_ROBOT_TOKEN} quay.io
 
       - name: Tag image for Quay.io
         run: docker tag $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/ecr-image-repo:ecr-image-tag quay.io/$QUAY_USERNAME/${{inputs.quay-image-repo}}:${{inputs.quay-image-tag}}
