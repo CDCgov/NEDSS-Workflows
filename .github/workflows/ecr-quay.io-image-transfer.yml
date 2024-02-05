@@ -1,0 +1,59 @@
+### Pulls docker images from private ECR and publishes them to public quay.io
+
+name: Moving Docker images from ECR to Quay.io
+
+on:
+  workflow_dispatch:
+    inputs:
+      ecr-image-repo:
+        description: 'ECR image repo name to pull'
+        required: true 
+      ecr-image-tag:
+        description: 'ECR image tag to pull'
+        required: true
+      quay-image-repo:
+        description: 'Quay.io image name (could be same as in ECR)'
+        required: true
+      quay-image-tag:
+        description: 'Quay.io image tag (could be same as in ECR)'
+        required: true
+
+env:
+  ACCOUNT_ID: ${{secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID}}
+  REGION: ${{secrets.AWS_REGION}}
+  github_repo_name: "NEDSS-Workflows"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker
+        uses: docker/setup-docker@v3
+
+      - name: Configure AWS credentials from Test account
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: "arn:aws:iam::${{ env.ACCOUNT_ID }}:role/cdc-github-${{ env.github_repo_name }}-dev-role"
+          role-session-name: migrate-containers
+          aws-region: ${{env.REGION}}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Pull image from ECR
+        run: docker pull ${{ env.ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/${{inputs.ecr-image-repo}}:${{ inputs.ecr-image-tag }}
+
+      - name: Login to Quay.io with Robot Account
+        run: docker login -u=${secret.QUAY_ROBOT_USERNAME} -p=${secret.QUAY_ROBOT_TOKEN} quay.io
+
+      - name: Tag image for Quay.io
+        run: docker tag ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{inputs.ecr-image-repo}}:${{inputs.ecr-image-tag}} quay.io/${{secret.QUAY_ROBOT_USERNAME}}/${{inputs.quay-image-repo}}:${{inputs.quay-image-tag}}
+
+      - name: Push image to Quay.io
+        run: docker push quay.io/${{ secrets.QUAY_ROBOT_USERNAME }}/${{inputs.quay-image-repo}}:${{ inputs.quay-image-tag }}
+
