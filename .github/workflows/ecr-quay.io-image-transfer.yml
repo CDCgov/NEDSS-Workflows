@@ -30,15 +30,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
-      # - name: Set up Docker
-      #   uses: docker/setup-docker@v2
-
-      - name: Configure AWS credentials from Test account
-        uses: aws-actions/configure-aws-credentials@v1
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{env.ACCOUNT_ID}}:role/cdc-github-NEDSS-Workflows-dev-role
-          role-session-name: migrate-containers
+          # role-session-name: migrate-containers
           aws-region: ${{env.REGION}}
 
       - name: Login to Amazon ECR
