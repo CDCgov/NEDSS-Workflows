@@ -38,7 +38,7 @@ jobs:
         with:
           role-to-assume: "arn:aws:iam::${{ env.accountid }}:role/cdc-github-${{ env.github_repo_name }}-dev-role"
           role-session-name: migrate-containers
-          aws-region: us-east-1
+          aws-region: ${{env.REGION}}
 
       - name: Login to Amazon ECR
         id: login-ecr
