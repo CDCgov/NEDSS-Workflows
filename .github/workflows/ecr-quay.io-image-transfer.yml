@@ -37,7 +37,7 @@ jobs:
       - name: Configure AWS credentials from Test account
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: "arn:aws:iam::${{ env.ACCOUNT_ID }}:role/cdc-github-${{ env.github_repo_name }}-dev-role"
+          role-to-assume: 'arn:aws:iam::${{ env.ACCOUNT_ID }}:role/cdc-github-${{ env.github_repo_name }}-dev-role'
           role-session-name: migrate-containers
           aws-region: ${{env.REGION}}
 
