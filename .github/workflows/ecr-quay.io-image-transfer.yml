@@ -19,7 +19,8 @@ on:
         required: true
 
 env:
-  accountid: ${{secrets.cdc_nbs_sandbox_shared_services_accountid}}
+  accountid: ${{secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID}}
+  REGION: ${{secrets.AWS_REGION}}
 
 jobs:
   publish:
@@ -44,14 +45,14 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Pull image from ECR
-        run: docker pull ${{ env.accountid }}.dkr.ecr.us-east-1.amazonaws.com/${{inputs.ecr-image-repo}}:${{inputs.ecr-image-tag}}
+        run: docker pull ${{ env.ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/${{inputs.ecr-image-repo}}:${{ inputs.ecr-image-tag }}
 
       - name: Login to Quay.io with Robot Account
         run: docker login -u=${secret.QUAY_ROBOT_USERNAME} -p=${secret.QUAY_ROBOT_TOKEN} quay.io
 
       - name: Tag image for Quay.io
-        run: docker tag $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/ecr-image-repo:ecr-image-tag quay.io/$QUAY_USERNAME/${{inputs.quay-image-repo}}:${{inputs.quay-image-tag}}
+        run: docker tag ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{inputs.ecr-image-repo}}:${{inputs.ecr-image-tag}} quay.io/${{secret.QUAY_ROBOT_USERNAME}}/${{inputs.quay-image-repo}}:${{inputs.quay-image-tag}}
 
       - name: Push image to Quay.io
-        run: docker push quay.io/$QUAY_USERNAME/${{inputs.quay-image-repo}}:${{inputs.quay-image-tag}}
+        run: docker push quay.io/${{ secrets.QUAY_ROBOT_USERNAME }}/${{inputs.quay-image-repo}}:${{ inputs.quay-image-tag }}
 
