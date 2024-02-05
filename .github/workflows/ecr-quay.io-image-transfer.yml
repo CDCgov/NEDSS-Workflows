@@ -31,8 +31,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Docker
-        uses: docker/setup-docker@v2
+      # - name: Set up Docker
+      #   uses: docker/setup-docker@v2
 
       - name: Configure AWS credentials from Test account
         uses: aws-actions/configure-aws-credentials@v1
