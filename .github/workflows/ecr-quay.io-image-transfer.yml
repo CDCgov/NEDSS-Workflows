@@ -52,8 +52,8 @@ jobs:
         run: docker login -u=${{secrets.QUAY_ROBOT_USERNAME}} -p=${{secrets.QUAY_ROBOT_TOKEN}} quay.io
 
       - name: Tag image for Quay.io
-        run: docker tag ${{env.ACCOUNT_ID}}.dkr.ecr.${{env.REGION}}.amazonaws.com/${{inputs.ecr-image-repo}}:${{inputs.ecr-image-tag}} quay.io/"tukhi"/${{inputs.quay-image-repo}}:${{inputs.quay-image-tag}}
+        run: docker tag ${{env.ACCOUNT_ID}}.dkr.ecr.${{env.REGION}}.amazonaws.com/${{inputs.ecr-image-repo}}:${{inputs.ecr-image-tag}} quay.io/${{secrets.ORGANIZATION}}/${{inputs.quay-image-repo}}:${{inputs.quay-image-tag}}
 
       - name: Push image to Quay.io
-        run: docker push quay.io/"tukhi"/${{inputs.quay-image-repo}}:${{ inputs.quay-image-tag }}
+        run: docker push quay.io/${{secrets.ORGANIZATION}}/${{inputs.quay-image-repo}}:${{ inputs.quay-image-tag }}
 
