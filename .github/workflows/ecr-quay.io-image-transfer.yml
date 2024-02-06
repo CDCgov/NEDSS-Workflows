@@ -12,11 +12,12 @@ on:
         description: 'ECR image tag to pull'
         required: true
       quay-image-repo:
-        description: 'Quay.io image name (could be same as in ECR)'
+        description: 'Quay.io image repo name'
         required: true
       quay-image-tag:
         description: 'Quay.io image tag (could be same as in ECR)'
         required: true
+
 permissions:
   id-token: write
   contents: read
@@ -24,7 +25,7 @@ permissions:
 env:
   ACCOUNT_ID: ${{secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID}}
   REGION: ${{secrets.AWS_REGION}}
-  github_repo_name: "NEDSS-Workflows"
+  GITHUB_REPO_NAME: "NEDSS-Workflows"
 
 jobs:
   publish:
@@ -37,8 +38,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{env.ACCOUNT_ID}}:role/cdc-github-NEDSS-Workflows-dev-role
-          #role-session-name: migrate-containers
+          role-to-assume: arn:aws:iam::${{env.ACCOUNT_ID}}:role/cdc-github-${{env.GITHUB_REPO_NAME}}-dev-role
           aws-region: ${{env.REGION}}
 
       - name: Login to Amazon ECR
