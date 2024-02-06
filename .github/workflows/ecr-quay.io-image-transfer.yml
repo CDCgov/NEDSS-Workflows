@@ -20,7 +20,7 @@ on:
 permissions:
   id-token: write
   contents: read
-  
+
 env:
   ACCOUNT_ID: ${{secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID}}
   REGION: ${{secrets.AWS_REGION}}
@@ -38,7 +38,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{env.ACCOUNT_ID}}:role/cdc-github-NEDSS-Workflows-dev-role
-          # role-session-name: migrate-containers
+          #role-session-name: migrate-containers
           aws-region: ${{env.REGION}}
 
       - name: Login to Amazon ECR
@@ -46,10 +46,10 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Pull image from ECR
-        run: docker pull ${{ env.ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/${{inputs.ecr-image-repo}}:${{ inputs.ecr-image-tag }}
+        run: docker pull ${{ env.ACCOUNT_ID }}.dkr.ecr.${{env.REGION}}.amazonaws.com/${{inputs.ecr-image-repo}}:${{ inputs.ecr-image-tag }}
 
       - name: Login to Quay.io with Robot Account
-        run: docker login -u=${secrets.QUAY_ROBOT_USERNAME} -p=${secrets.QUAY_ROBOT_TOKEN} quay.io
+        run: docker login -u="tukhi+github_test_robot_account" -p=${secrets.QUAY_ROBOT_TOKEN} quay.io
 
       - name: Tag image for Quay.io
         run: docker tag ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{inputs.ecr-image-repo}}:${{inputs.ecr-image-tag}} quay.io/${{secrets.QUAY_ROBOT_USERNAME}}/${{inputs.quay-image-repo}}:${{inputs.quay-image-tag}}
