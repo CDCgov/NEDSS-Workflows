@@ -1,0 +1,162 @@
+name: Build and store a microservice container
+on:
+  workflow_call:
+    inputs:
+      # container build inputs
+      container_name:
+        description: "Name of container in ECR."
+        required: true
+        type: string
+      dockerfile_relative_path:
+        description: "Relative path to dockerfile being built (use '-f' docker argument if the dockerfile referenced from the root directory)."
+        required: true
+        type: string
+      nbs6_version:
+        description: NBS6 Version. This will be used to pull NBS ZIP from S3 Bucker in Shared Account and Tag Docker Image
+        required: true
+        type: string
+      # Container scanning inputs   
+      severity:
+        description: 'Severities of vulnerabilities to be scanned for and displayed (UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL)'
+        required: false  
+        default: 'CRITICAL,HIGH'
+        type: string
+      limit-severities-for-sarif:
+        description: 'By default SARIF format enforces output of all vulnerabilities regardless of configured severities. To override this behavior set this parameter to true'
+        required: false  
+        default: true
+        type: boolean
+      upload-to-github-security-tab:
+        description: 'Upload results to GitHub security tab?'
+        required: false
+        default: true
+        type: boolean
+      ignore-unfixed:
+        description: Ignore unpatched/unfixed vulnerabilities
+        required: false
+        default: false
+        type: boolean 
+      skip-dirs:
+        description: 'Comma separated list of directories where traversal is skipped'
+        required: false 
+        default: ''
+        type: string
+      skip-files:
+        description: 'Comma separated list of files where traversal is skipped'
+        required: false  
+        default: ''
+        type: string
+      timeout:
+        description: 'Scan timeout duration'
+        required: false  
+        default: '10m0s'
+        type: string
+      exit-code:
+        description: 'Exit code when specified vulnerabilities are found (0).'
+        required: false  
+        default: '0'
+        type: string
+      trivyignores:
+        description: 'Comma-separated list of relative paths in repository to one or more .trivyignore files, for usage see https://aquasecurity.github.io/trivy/v0.19.2/vulnerability/examples/filter/'
+        required: false         
+        type: string         
+    secrets:
+      CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID:
+        description: "Secret named CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID where ECR resides."
+        required: true
+      ECR_REPO_BASE_NAME:
+        description: "Secret named ECR_REPO_BASE_NAME describing the ECR base path name."
+        required: true
+      GIT_USER_EMAIL:
+        description: "Secret named GIT_USER_EMAIL for the CI user email."
+        required: false
+      GIT_USER_NAME:
+        description: "Secret named ECR_REPO_BASE_NAME for the CI user name."
+        required: false
+    outputs:
+      output_image_tag:
+        description: "Container image tag" 
+        value: ${{ jobs.build.outputs.output_image_tag }}
+jobs:
+  build:
+    name: Build and store container
+    runs-on: ubuntu-latest
+    outputs:
+      output_image_tag: ${{ steps.set-env-variables.outputs.output_image_tag }}
+
+    # These permissions are needed to interact with GitHub's OIDC Token endpoint.
+    # New comment
+    permissions:
+      id-token: write
+      contents: read
+      security-events: write
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+
+    - name: Configure Environment Variables
+      run: |
+        github_sha_short=$(git rev-parse --short "$GITHUB_SHA")      
+        github_repo_name="$(echo $GITHUB_REPOSITORY | cut -d'/' -f2)"        
+        github_tag=${GITHUB_REF#refs/tags/}
+        echo "github_sha_short=$github_sha_short" >> $GITHUB_ENV        
+        echo "github_tag=$github_tag" >> $GITHUB_ENV
+        echo "github_repo_name=$github_repo_name" >> $GITHUB_ENV      
+
+    - name: Create Version Tag
+      run: |
+        echo "nbs6_version=$nbs6_version" >> $GITHUB_ENV
+        echo "nbs6_version=$nbs6_version" >> $GITHUB_OUTPUT
+
+    - name: Set image tag output
+      id: set-env-variables
+      run: echo "output_image_tag=${{ env.nbs6_version }}" >> $GITHUB_OUTPUT
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        role-to-assume: "arn:aws:iam::${{ secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID }}:role/cdc-github-${{ env.github_repo_name }}-dev-role"
+        role-session-name: deploy-infrastructure
+        aws-region: us-east-1
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build and tag ${{ inputs.container_name }} image
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ secrets.ECR_REPO_BASE_NAME }}/${{ inputs.container_name }}
+        IMAGE_TAG: "${{ env.nbs6_version }}"
+      run: |
+        # Build a docker container 
+        echo "Building image.." 
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ${{ inputs.dockerfile_relative_path}}
+        echo "CONTAINER_TAG=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV        
+
+    - name: Scan container image
+      uses: CDCgov/NEDSS-Workflows/.github/actions/trivy-scanner@main
+      with:
+        container-ref: ${{ env.CONTAINER_TAG }}
+        severity: ${{ inputs.severity }}
+        upload-to-github-security-tab: ${{ inputs.upload-to-github-security-tab }}
+        ignore-unfixed: ${{ inputs.ignore-unfixed }}
+        skip-dirs: ${{ inputs.skip-dirs }}
+        skip-files: ${{ inputs.skip-files }}
+        exit-code: ${{ inputs.exit-code }}
+        trivyignores: ${{ inputs.trivyignores }}
+        limit-severities-for-sarif: ${{inputs.limit-severities-for-sarif}}
+
+    - name: Push ${{ inputs.container_name }} image to Amazon ECR
+      id: push-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ secrets.ECR_REPO_BASE_NAME }}/${{ inputs.container_name }}
+        IMAGE_TAG: "${{ env.nbs6_version }}"
+      run: |
+        echo "Pushing image to ECR..."
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
