@@ -64,15 +64,9 @@ on:
       CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID:
         description: "Secret named CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID where ECR resides."
         required: true
-      ECR_REPO_BASE_NAME:
-        description: "Secret named ECR_REPO_BASE_NAME describing the ECR base path name."
+      ECR_CLASSIC_REPO_BASE_NAME:
+        description: "Secret named ECR_CLASSIC_REPO_BASE_NAME describing the ECR base path name."
         required: true
-      GIT_USER_EMAIL:
-        description: "Secret named GIT_USER_EMAIL for the CI user email."
-        required: false
-      GIT_USER_NAME:
-        description: "Secret named ECR_REPO_BASE_NAME for the CI user name."
-        required: false
     outputs:
       output_image_tag:
         description: "Container image tag" 
@@ -80,7 +74,7 @@ on:
 jobs:
   build:
     name: Build and store container
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     outputs:
       output_image_tag: ${{ steps.set-env-variables.outputs.output_image_tag }}
 
@@ -129,7 +123,7 @@ jobs:
       id: build-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ secrets.ECR_REPO_BASE_NAME }}/${{ inputs.container_name }}
+        ECR_REPOSITORY: ${{ secrets.ECR_CLASSIC_REPO_BASE_NAME }}/${{ inputs.container_name }}
         IMAGE_TAG: "${{ env.nbs6_version }}"
       run: |
         # Build a docker container 
@@ -154,7 +148,7 @@ jobs:
       id: push-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ secrets.ECR_REPO_BASE_NAME }}/${{ inputs.container_name }}
+        ECR_REPOSITORY: ${{ secrets.ECR_CLASSIC_REPO_BASE_NAME }}/${{ inputs.container_name }}
         IMAGE_TAG: "${{ env.nbs6_version }}"
       run: |
         echo "Pushing image to ECR..."
