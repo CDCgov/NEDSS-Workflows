@@ -99,10 +99,6 @@ jobs:
         $github_tag=${$env:GITHUB_REF#refs/tags/}
         echo "$github_tag=$env:github_tag" >> $env:GITHUB_ENV
         echo "$github_repo_name=$env:github_repo_name" >> $env:GITHUB_ENV
-        Write-Host "Try 1"
-        echo $GITHUB_ENV
-        Write-Host "Try 2"
-        echo $env:GITHUB_ENV
 
     - name: Create Version Tag
       run: |
