@@ -94,14 +94,8 @@ jobs:
 
     - name: Configure Environment Variables
       run: |
-        Write-Host "Hello, world!"
-        git --version
-        Write-Host "WITH ENV"
-        echo $env:GITHUB_REPOSITORY
-        Write-Host "WITHOUT ENV"
-        echo $GITHUB_REPOSITORY
-        
-        github_repo_name=$env:GITHUB_REPOSITORY.Split('/')[1]
+        echo $env:GITHUB_REPOSITORY       
+        github_repo_name = ($env:GITHUB_REPOSITORY -split '/')[1]
         echo $env:github_repo_name
         github_tag=${GITHUB_REF#refs/tags/}
         echo "github_tag=$github_tag" >> $GITHUB_ENV
