@@ -96,15 +96,15 @@ jobs:
       run: |
         Write-Host "Current value of nbs6_version: $env:nbs6_version"
         Write-Host "Current value of nbs6_version: $nbs6_version"
-        Write-Host "Current value of nbs6_version: ${{ env.nbs6_version }}"
+        Write-Host "Current value of nbs6_version: ${{ inputs.nbs6_version }}"
 
         Write-Host "Current value of container_name: $env:container_name"
         Write-Host "Current value of container_name: $container_name"
-        Write-Host "Current value of container_name: ${{ env.container_name }}"
+        Write-Host "Current value of container_name: ${{ inputs.container_name }}"
 
         Write-Host "Current value of dockerfile_relative_path: $env:dockerfile_relative_path"
         Write-Host "Current value of dockerfile_relative_path: $dockerfile_relative_path"
-        Write-Host "Current value of dockerfile_relative_path: ${{ env.dockerfile_relative_path }}"
+        Write-Host "Current value of dockerfile_relative_path: ${{ inputs.dockerfile_relative_path }}"
 
       
         $github_tag = "$env:GITHUB_REF#refs/tags/"
@@ -116,7 +116,7 @@ jobs:
       run: |
         Write-Host "Current value of nbs6_version: $env:nbs6_version"
         Write-Host "Current value of nbs6_version: $nbs6_version"
-        Write-Host "Current value of nbs6_version: ${{ env.nbs6_version }}"
+        Write-Host "Current value of nbs6_version: ${{ inputs.nbs6_version }}"
         
         "nbs6_version=$env:nbs6_version" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
         "nbs6_version=$env:nbs6_version" | Out-File -FilePath  $env:GITHUB_OUTPUT -Encoding utf8 -Append
@@ -142,7 +142,7 @@ jobs:
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: ${{ secrets.ECR_CLASSIC_REPO_BASE_NAME }}/${{ inputs.container_name }}
-        IMAGE_TAG: "${{ env.nbs6_version }}"
+        IMAGE_TAG: "${{ inputs.nbs6_version }}"
       run: |
         # Build a docker container 
         echo "Building image.." 
