@@ -97,19 +97,19 @@ jobs:
         echo $env:GITHUB_REPOSITORY       
         $github_repo_name = ($env:GITHUB_REPOSITORY -split '/')[1]
         $github_tag=${GITHUB_REF#refs/tags/}
-        echo "$github_tag=$env:github_tag" >> $GITHUB_ENV
-        echo "$github_repo_name=$env:github_repo_name" >> $GITHUB_ENV
+        echo "$github_tag=$env:github_tag" >> $env:GITHUB_ENV
+        echo "$github_repo_name=$env:github_repo_name" >> $env:GITHUB_ENV
         Write-Host "Try 1"
-        echo $GITHUB_ENV
-        echo $GITHUB_ENV
+        echo $env:GITHUB_ENV
+        echo $env:GITHUB_ENV
         Write-Host "Try 2"
         echo $env:GITHUB_ENV
         echo $env:GITHUB_ENV
 
     - name: Create Version Tag
       run: |
-        echo "$nbs6_version=$env:nbs6_version" >> $GITHUB_ENV
-        echo "$nbs6_version=$env:nbs6_version" >> $GITHUB_OUTPUT
+        echo "$nbs6_version=$env:nbs6_version" >> $env:GITHUB_ENV
+        echo "$nbs6_version=$env:nbs6_version" >> $env:GITHUB_OUTPUT
         Write-Host "Try 1"
         echo $github_repo_name
         Write-Host "Try 2"
@@ -118,7 +118,7 @@ jobs:
     - name: Set image tag output
       id: set-env-variables
       run: |
-        echo "$output_image_tag=${{ env.nbs6_version }}" >> $GITHUB_OUTPUT
+        echo "$output_image_tag=$env:nbs6_version" >> $env:GITHUB_OUTPUT
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -141,7 +141,7 @@ jobs:
         # Build a docker container 
         echo "Building image.." 
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ${{ inputs.dockerfile_relative_path}}
-        echo "CONTAINER_TAG=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV        
+        echo "CONTAINER_TAG=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $env:GITHUB_ENV        
 
     - name: Scan container image
       uses: CDCgov/NEDSS-Workflows/.github/actions/trivy-scanner@main
@@ -165,4 +165,4 @@ jobs:
       run: |
         echo "Pushing image to ECR..."
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $env:GITHUB_OUTPUT
