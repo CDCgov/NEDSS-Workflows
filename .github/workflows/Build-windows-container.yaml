@@ -96,8 +96,6 @@ jobs:
       run: |
         $github_tag = "$env:GITHUB_REF#refs/tags/"
         $github_repo_name = ($env:GITHUB_REPOSITORY -split '/')[1]
-        Write-Host "Current value of github_tag: $github_tag"
-        Write-Host "Current value of github_repo_name: $github_repo_name"
         "github_tag=$github_tag" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
         "github_repo_name=$github_repo_name" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
 
@@ -131,6 +129,9 @@ jobs:
       run: |
         # Build a docker container 
         echo "Building image.." 
+        Write-Host "Current value of ECR_REGISTRY: $ECR_REGISTRY"
+        Write-Host "Current value of ECR_REPOSITORY: $ECR_REPOSITORY"
+        Write-Host "Current value of IMAGE_TAG: $env:IMAGE_TAG"
         docker build -t $env:ECR_REGISTRY/$env:ECR_REPOSITORY:$env:IMAGE_TAG ${{ inputs.dockerfile_relative_path}}
         echo "CONTAINER_TAG=$env:ECR_REGISTRY/$env:ECR_REPOSITORY:$env:IMAGE_TAG" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
 
