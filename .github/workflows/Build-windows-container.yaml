@@ -15,7 +15,6 @@ on:
         description: NBS6 Version. This will be used to pull NBS ZIP from S3 Bucker in Shared Account and Tag Docker Image
         required: true
         type: string
-        default: 'TESTING'
       # Container scanning inputs   
       severity:
         description: 'Severities of vulnerabilities to be scanned for and displayed (UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL)'
