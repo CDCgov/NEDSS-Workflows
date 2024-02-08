@@ -97,7 +97,7 @@ jobs:
         echo $env:GITHUB_REPOSITORY
         echo $env:GITHUB_REF
         $github_tag = "$env:GITHUB_REF#refs/tags/"
-        $github_repo_name = "$env:GITHUB_REPOSITORY -split '/'"
+        $github_repo_name = ($env:GITHUB_REPOSITORY -split '/')[1]
         Write-Host "Current value of github_tag: $github_tag"
         Write-Host "Current value of github_repo_name: $github_repo_name"
 
@@ -106,12 +106,12 @@ jobs:
 
     - name: Create Version Tag
       run: |
+        Write-Host "Current value of github_tag: $github_tag"
+        Write-Host "Current value of github_repo_name: $github_repo_name"
+
         echo "$nbs6_version=$env:nbs6_version" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
         echo "$nbs6_version=$env:nbs6_version" | Out-File -FilePath  $env:GITHUB_OUTPUT -Encoding utf8 -Append
-        Write-Host "Try 1"
-        echo $github_repo_name
-        Write-Host "Try 2"
-        echo $env:github_repo_name
+
 
     - name: Set image tag output
       id: set-env-variables
