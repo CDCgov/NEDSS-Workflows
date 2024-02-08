@@ -102,17 +102,13 @@ jobs:
     - name: Create Version Tag
       env:
         IMAGE_TAG: "${{ inputs.nbs6_version }}"
-      run: |
-        Write-Host "Current value of IMAGE_TAG: $env:IMAGE_TAG"
-        
+      run: |      
         "nbs6_version=$env:IMAGE_TAG" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
         "nbs6_version=$env:IMAGE_TAG" | Out-File -FilePath  $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
     - name: Set image tag output
       id: set-env-variables
-      run: |
-        Write-Host "Current value of IMAGE_TAG: $env:nbs6_version"
-        
+      run: |        
         "output_image_tag=$env:nbs6_version" | Out-File -FilePath  $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
     - name: Configure AWS credentials
@@ -133,12 +129,10 @@ jobs:
         ECR_REPOSITORY: ${{ secrets.ECR_CLASSIC_REPO_BASE_NAME }}/${{ inputs.container_name }}
         IMAGE_TAG: "${{ inputs.nbs6_version }}"
       run: |
-        # Build a docker container 
+        # Build a docker container
+        ls
+        pwd 
         echo "Building image.." 
-        Write-Host "Current value of ECR_REGISTRY: $env:ECR_REGISTRY"
-        Write-Host "Current value of ECR_REPOSITORY: $env:ECR_REPOSITORY"
-        Write-Host "Current value of IMAGE_TAG: $env:IMAGE_TAG"
-        Write-Host "Current value of nbs6_version: $env:nbs6_version"
         docker build -t $env:ECR_REGISTRY/$env:ECR_REPOSITORY:$env:IMAGE_TAG ${{ inputs.dockerfile_relative_path}}
         echo "CONTAINER_TAG=$env:ECR_REGISTRY/$env:ECR_REPOSITORY:$env:IMAGE_TAG" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
 
