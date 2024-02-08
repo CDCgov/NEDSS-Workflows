@@ -75,6 +75,9 @@ jobs:
   build:
     name: Build and store container
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
     outputs:
       output_image_tag: ${{ steps.set-env-variables.outputs.output_image_tag }}
 
@@ -91,8 +94,10 @@ jobs:
 
     - name: Configure Environment Variables
       run: |
+        Write-Host "Hello, world!"
         git --version 
         echo $env:GITHUB_REPOSITORY
+        echo $GITHUB_REPOSITORY
         github_repo_name="$(echo $env:GITHUB_REPOSITORY | cut -d'/' -f2)"        
         github_tag=${GITHUB_REF#refs/tags/}
         echo "github_tag=$github_tag" >> $GITHUB_ENV
