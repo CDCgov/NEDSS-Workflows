@@ -77,7 +77,7 @@ jobs:
     runs-on: windows-latest
     defaults:
       run:
-        shell: powershell
+        shell: pwsh
     outputs:
       output_image_tag: ${{ steps.set-env-variables.outputs.output_image_tag }}
 
@@ -94,9 +94,12 @@ jobs:
 
     - name: Configure Environment Variables
       run: |
-        echo $env:GITHUB_REPOSITORY       
+        echo $env:GITHUB_REPOSITORY
+        echo $env:GITHUB_REF
+        $github_tag=${$env:GITHUB_REF#refs/tags/}  
         $github_repo_name = ($env:GITHUB_REPOSITORY -split '/')[1]
-        $github_tag=${$env:GITHUB_REF#refs/tags/}
+        Write-Host "Current value of github_tag: $env:github_tag"
+        Write-Host "Current value of github_repo_name: $env:github_repo_name"
         echo "$github_tag=$env:github_tag" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
         echo "$github_repo_name=$env:github_repo_name" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
 
