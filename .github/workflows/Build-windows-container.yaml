@@ -94,6 +94,11 @@ jobs:
 
     - name: Configure Environment Variables
       run: |
+        Write-Host "Current value of nbs6_version: $env:nbs6_version"
+        Write-Host "Current value of nbs6_version: $nbs6_version"
+        Write-Host "Current value of nbs6_version: ${{ env.nbs6_version }}"
+
+      
         $github_tag = "$env:GITHUB_REF#refs/tags/"
         $github_repo_name = ($env:GITHUB_REPOSITORY -split '/')[1]
         "github_tag=$github_tag" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
