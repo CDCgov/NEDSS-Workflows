@@ -93,37 +93,26 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Configure Environment Variables
-      run: |
-        Write-Host "Current value of nbs6_version: $env:nbs6_version"
-        Write-Host "Current value of nbs6_version: $nbs6_version"
-        Write-Host "Current value of nbs6_version: ${{ inputs.nbs6_version }}"
-
-        Write-Host "Current value of container_name: $env:container_name"
-        Write-Host "Current value of container_name: $container_name"
-        Write-Host "Current value of container_name: ${{ inputs.container_name }}"
-
-        Write-Host "Current value of dockerfile_relative_path: $env:dockerfile_relative_path"
-        Write-Host "Current value of dockerfile_relative_path: $dockerfile_relative_path"
-        Write-Host "Current value of dockerfile_relative_path: ${{ inputs.dockerfile_relative_path }}"
-
-      
+      run: |     
         $github_tag = "$env:GITHUB_REF#refs/tags/"
         $github_repo_name = ($env:GITHUB_REPOSITORY -split '/')[1]
         "github_tag=$github_tag" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
         "github_repo_name=$github_repo_name" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
 
     - name: Create Version Tag
+      env:
+        IMAGE_TAG: "${{ inputs.nbs6_version }}"
       run: |
-        Write-Host "Current value of nbs6_version: $env:nbs6_version"
-        Write-Host "Current value of nbs6_version: $nbs6_version"
-        Write-Host "Current value of nbs6_version: ${{ inputs.nbs6_version }}"
+        Write-Host "Current value of IMAGE_TAG: $env:IMAGE_TAG"
         
-        "nbs6_version=$env:nbs6_version" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
-        "nbs6_version=$env:nbs6_version" | Out-File -FilePath  $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        "nbs6_version=$env:IMAGE_TAG" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
+        "nbs6_version=$env:IMAGE_TAG" | Out-File -FilePath  $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
     - name: Set image tag output
       id: set-env-variables
       run: |
+        Write-Host "Current value of IMAGE_TAG: $env:nbs6_version"
+        
         "output_image_tag=$env:nbs6_version" | Out-File -FilePath  $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
     - name: Configure AWS credentials
