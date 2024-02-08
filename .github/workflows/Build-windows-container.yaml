@@ -94,31 +94,22 @@ jobs:
 
     - name: Configure Environment Variables
       run: |
-        echo $env:GITHUB_REPOSITORY
-        echo $env:GITHUB_REF
-        Get-Content $env:GITHUB_ENV
-
         $github_tag = "$env:GITHUB_REF#refs/tags/"
         $github_repo_name = ($env:GITHUB_REPOSITORY -split '/')[1]
         Write-Host "Current value of github_tag: $github_tag"
         Write-Host "Current value of github_repo_name: $github_repo_name"
-
         "github_tag=$github_tag" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
         "github_repo_name=$github_repo_name" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
-        Get-Content $env:GITHUB_ENV
+
     - name: Create Version Tag
       run: |
-        Write-Host "Current value of github_tag: $env:github_tag"
-        Write-Host "Current value of github_repo_name:  $env:github_repo_name"
-
-        echo "$nbs6_version=$env:nbs6_version" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
-        echo "$nbs6_version=$env:nbs6_version" | Out-File -FilePath  $env:GITHUB_OUTPUT -Encoding utf8 -Append
-
+        "nbs6_version=$env:nbs6_version" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
+        "nbs6_version=$env:nbs6_version" | Out-File -FilePath  $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
     - name: Set image tag output
       id: set-env-variables
       run: |
-        echo "$output_image_tag=$env:nbs6_version" | Out-File -FilePath  $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        "output_image_tag=$env:nbs6_version" | Out-File -FilePath  $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
