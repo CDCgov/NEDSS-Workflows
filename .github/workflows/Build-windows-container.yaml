@@ -96,8 +96,8 @@ jobs:
       run: |
         echo $env:GITHUB_REPOSITORY
         echo $env:GITHUB_REF
-        $github_tag = $env:GITHUB_REF#refs/tags/
-        $github_repo_name = $env:GITHUB_REPOSITORY -split '/'
+        $github_tag = "$env:GITHUB_REF#refs/tags/"
+        $github_repo_name = "$env:GITHUB_REPOSITORY -split '/'"
         Write-Host "Current value of github_tag: $env:github_tag"
         Write-Host "Current value of github_repo_name: $env:github_repo_name"
 
