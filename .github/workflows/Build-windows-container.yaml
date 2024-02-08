@@ -77,7 +77,7 @@ jobs:
     runs-on: windows-latest
     defaults:
       run:
-        shell: pwsh
+        shell: powershell
     outputs:
       output_image_tag: ${{ steps.set-env-variables.outputs.output_image_tag }}
 
@@ -97,13 +97,13 @@ jobs:
         echo $env:GITHUB_REPOSITORY       
         $github_repo_name = ($env:GITHUB_REPOSITORY -split '/')[1]
         $github_tag=${$env:GITHUB_REF#refs/tags/}
-        echo "$github_tag=$env:github_tag" | Out-File -FilePath  $env:GITHUB_ENV -Append
-        echo "$github_repo_name=$env:github_repo_name" | Out-File -FilePath  $env:GITHUB_ENV -Append
+        echo "$github_tag=$env:github_tag" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
+        echo "$github_repo_name=$env:github_repo_name" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
 
     - name: Create Version Tag
       run: |
-        echo "$nbs6_version=$env:nbs6_version" | Out-File -FilePath  $env:GITHUB_ENV -Append
-        echo "$nbs6_version=$env:nbs6_version" | Out-File -FilePath  $env:GITHUB_OUTPUT -Append
+        echo "$nbs6_version=$env:nbs6_version" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
+        echo "$nbs6_version=$env:nbs6_version" | Out-File -FilePath  $env:GITHUB_OUTPUT -Encoding utf8 -Append
         Write-Host "Try 1"
         echo $github_repo_name
         Write-Host "Try 2"
@@ -112,7 +112,7 @@ jobs:
     - name: Set image tag output
       id: set-env-variables
       run: |
-        echo "$output_image_tag=$env:nbs6_version" | Out-File -FilePath  $env:GITHUB_OUTPUT -Append
+        echo "$output_image_tag=$env:nbs6_version" | Out-File -FilePath  $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -135,7 +135,7 @@ jobs:
         # Build a docker container 
         echo "Building image.." 
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ${{ inputs.dockerfile_relative_path}}
-        echo "CONTAINER_TAG=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" | Out-File -FilePath  $env:GITHUB_ENV -Append
+        echo "CONTAINER_TAG=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
 
     - name: Scan container image
       uses: CDCgov/NEDSS-Workflows/.github/actions/trivy-scanner@main
@@ -159,4 +159,4 @@ jobs:
       run: |
         echo "Pushing image to ECR..."
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" | Out-File -FilePath  $env:GITHUB_OUTPUT -Append
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" | Out-File -FilePath  $env:GITHUB_OUTPUT -Encoding utf8 -Append
