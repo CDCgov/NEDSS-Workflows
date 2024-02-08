@@ -131,8 +131,8 @@ jobs:
       run: |
         # Build a docker container 
         echo "Building image.." 
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ${{ inputs.dockerfile_relative_path}}
-        echo "CONTAINER_TAG=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
+        docker build -t $env:ECR_REGISTRY/$env:ECR_REPOSITORY:$env:IMAGE_TAG ${{ inputs.dockerfile_relative_path}}
+        echo "CONTAINER_TAG=$env:ECR_REGISTRY/$env:ECR_REPOSITORY:$env:IMAGE_TAG" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
 
     - name: Scan container image
       uses: CDCgov/NEDSS-Workflows/.github/actions/trivy-scanner@main
@@ -155,5 +155,5 @@ jobs:
         IMAGE_TAG: "${{ env.nbs6_version }}"
       run: |
         echo "Pushing image to ECR..."
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" | Out-File -FilePath  $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        docker push $env:ECR_REGISTRY/$env:ECR_REPOSITORY:$env:IMAGE_TAG
+        echo "image=$env:ECR_REGISTRY/$env:ECR_REPOSITORY:$env:IMAGE_TAG" | Out-File -FilePath  $env:GITHUB_OUTPUT -Encoding utf8 -Append
