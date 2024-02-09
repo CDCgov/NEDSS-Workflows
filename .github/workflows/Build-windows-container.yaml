@@ -71,6 +71,9 @@ on:
       CLASSIC_ZIP_S3_BUCKET:
         description: "Secret named CLASSIC_ZIP_S3_BUCKET providing S3 Bucket for NBS6 ZIP File."
         required: true
+      USER_GUIDE_S3_BUCKET:
+          description: "Secret named USER_GUIDE_S3_BUCKET providing S3 Bucket for User Guide File."
+          required: true
 
     outputs:
       output_image_tag:
