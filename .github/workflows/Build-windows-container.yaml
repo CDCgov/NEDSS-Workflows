@@ -67,7 +67,7 @@ jobs:
         DOCKERFILE_PATH: "${{ inputs.dockerfile_relative_path}}"
       run: |
         # Modernization API Repository
-        $apiUrl = "https://api.github.com/repos/${env:GITHUB_REPOSITORY}/releases/latest"
+        $apiUrl = "https://api.github.com/repos/$env:GITHUB_REPOSITORY/releases/latest"
         
         # Fetch the latest release
         $latestRelease = Invoke-RestMethod -Uri $apiUrl
@@ -77,25 +77,25 @@ jobs:
         Write-Output "Latest Release Tag: $latestTag"
         
         # Set Zip File Name
-        $zip_url = ($latestRelease.assets | Where-Object { $_.name -eq ${env:ZIP_FILE_NAME} }).browser_download_url
+        $zip_url = ($latestRelease.assets | Where-Object { $_.name -eq $env:ZIP_FILE_NAME }).browser_download_url
         
         # Download Zip File
-        Invoke-WebRequest -Uri $zip_url -OutFile ${env:ZIP_FILE_NAME}
+        Invoke-WebRequest -Uri $zip_url -OutFile $env:ZIP_FILE_NAME
         
-        Write-Output "Downloaded asset to: ${env:ZIP_FILE_NAME}"
+        Write-Output "Downloaded asset to: $env:ZIP_FILE_NAME"
 
         # Extract ZIP to temporary directory
-        Expand-Archive -LiteralPath "${env:ZIP_FILE_NAME}" -Force
+        Expand-Archive -LiteralPath "$env:ZIP_FILE_NAME" -Force
 
-        Write-Output "${env:ZIP_FILE_NAME}"
-        $zip_folder = ${env:ZIP_FILE_NAME}.Trim(".zip")
+        Write-Output "$env:ZIP_FILE_NAME"
+        $zip_folder = $env:ZIP_FILE_NAME.Trim(".zip")
 
         Write-Output "$zip_folder"
-        Write-Output "$zip_folder/${env:USER_GUIDE_DOC_NAME}"
+        Write-Output "$zip_folder/$env:USER_GUIDE_DOC_NAME"
 
         # Move the specific file to the final destination
-        $user_guide_path = Join-Path -Path $zip_folder -ChildPath "$zip_folder/${env:USER_GUIDE_DOC_NAME}"
-        Move-Item -Path $user_guide_path -Destination ${env:DOCKERFILE_PATH} -Force
+        $user_guide_path = Join-Path -Path $zip_folder -ChildPath "$zip_folder/$env:USER_GUIDE_DOC_NAME"
+        Move-Item -Path $user_guide_path -Destination $env:DOCKERFILE_PATH -Force
 
 
     - name: Pull NBS6 ${{ inputs.nbs6_version }} Zip File Version
@@ -131,7 +131,7 @@ jobs:
       run: |
         # Build a docker container
         echo "Building image.."
-        $full_zip_name = "wildfly-10.0.0.Final-${env:IMAGE_TAG}"
+        $full_zip_name = "wildfly-10.0.0.Final-${env:IMAGE_TAG"
         $docker_build_command = "docker build --build-arg ZIP_NAME=$full_zip_name -t ${env:ECR_REGISTRY}/${env:ECR_REPOSITORY}:${env:IMAGE_TAG} ${env:DOCKERFILE_PATH}"
         Invoke-Expression $docker_build_command
 
@@ -145,4 +145,4 @@ jobs:
       run: |
         echo "Pushing image to ECR..."
         docker push ${env:ECR_REGISTRY}/${env:ECR_REPOSITORY}:${env:IMAGE_TAG}
-        "image=${env:ECR_REGISTRY}/${env:ECR_REPOSITORY}:${env:IMAGE_TAG}" | Out-File -FilePath  ${env:GITHUB_OUTPUT} -Encoding utf8 -Append
+        "image=${env:ECR_REGISTRY}/${env:ECR_REPOSITORY}:${env:IMAGE_TAG}" | Out-File -FilePath  $env:GITHUB_OUTPUT -Encoding utf8 -Append
