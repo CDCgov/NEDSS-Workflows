@@ -75,11 +75,6 @@ on:
           description: "Secret named USER_GUIDE_S3_BUCKET providing S3 Bucket for User Guide File."
           required: true
 
-    outputs:
-      output_image_tag:
-        description: "Container image tag" 
-        value: ${{ jobs.build.outputs.output_image_tag }}
-
 
 jobs:
   build:
@@ -88,8 +83,6 @@ jobs:
     defaults:
       run:
         shell: pwsh
-    outputs:
-      output_image_tag: ${{ steps.set-env-variables.outputs.output_image_tag }}
 
     # These permissions are needed to interact with GitHub's OIDC Token endpoint.
     # New comment
@@ -102,24 +95,32 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
-    - name: Configure Environment Variables
-      run: |     
-        $github_tag = "$env:GITHUB_REF#refs/tags/"
-        $github_repo_name = ($env:GITHUB_REPOSITORY -split '/')[1]
-        "github_tag=$github_tag" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
-        "github_repo_name=$github_repo_name" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
 
-    - name: Create Version Tag
-      env:
-        IMAGE_TAG: "${{ inputs.nbs6_version }}"
-      run: |      
-        "nbs6_version=$env:IMAGE_TAG" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
-        "nbs6_version=$env:IMAGE_TAG" | Out-File -FilePath  $env:GITHUB_OUTPUT -Encoding utf8 -Append
+    - name: Get User Guide from Release
+      run: |
+        $apiUrl = "https://api.github.com/repos/$env:GITHUB_REPOSITORY/releases/latest"
+        
+        # Fetch the latest release
+        $latestRelease = Invoke-RestMethod -Uri $apiUrl
+        
+        # Output the latest tag name
+        $latestTag = $latestRelease.tag_name
+        Write-Output "Latest release tag: $latestTag"
+        
+        # Assuming the asset's name
+        $assetName = "v7.2.2.NEDSS.NBS.Modernized.Documentation.zip"
+        $assetUrl = ($latestRelease.assets | Where-Object { $_.name -eq $assetName }).browser_download_url
+        
+        # Download location
+        $outputPath = "C:\$assetName"
+        
+        # Download the asset
+        Invoke-WebRequest -Uri $assetUrl -OutFile $outputPath
+        
+        Write-Output "Downloaded asset to: $outputPath"
 
-    - name: Set Tmage Tag Output
-      id: set-env-variables
-      run: |        
-        "output_image_tag=$env:nbs6_version" | Out-File -FilePath  $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        ls
+
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -128,9 +129,11 @@ jobs:
         role-session-name: deploy-infrastructure
         aws-region: us-east-1
 
+
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
+
 
     - name: Pull NBS6 ${{ inputs.nbs6_version }} Zip File Version
       env:
@@ -139,6 +142,7 @@ jobs:
       run: |
         $s3_pull_command = "aws s3 cp s3://${env:CLASSIC_ZIP_S3_BUCKET}/wildfly-10.0.0.Final-${env:IMAGE_TAG}.zip ./cdc-sandbox/nbs6-win-container/"
         Invoke-Expression $s3_pull_command
+
 
     - name: Build and Tag ${{ inputs.container_name }} Image
       id: build-image
@@ -153,6 +157,7 @@ jobs:
         $full_zip_name = "wildfly-10.0.0.Final-$env:IMAGE_TAG"
         $docker_build_command = "docker build --build-arg ZIP_NAME=$full_zip_name -t ${env:ECR_REGISTRY}/${env:ECR_REPOSITORY}:${env:IMAGE_TAG} ${env:DOCKERFILE_PATH}"
         Invoke-Expression $docker_build_command
+
 
     - name: Push ${{ inputs.container_name }} image to Amazon ECR
       id: push-image
