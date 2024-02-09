@@ -151,7 +151,7 @@ jobs:
       run: |
         # Build a docker container
         echo "Building image.."
-        $docker_build_command = "docker build -t ${env:ECR_REGISTRY}/${env:ECR_REPOSITORY}:${env:IMAGE_TAG} ${env:DOCKERFILE_PATH}"
+        $docker_build_command = "docker build --build-arg ZIP_NAME="wildfly-10.0.0.Final-${env:IMAGE_TAG}" -t ${env:ECR_REGISTRY}/${env:ECR_REPOSITORY}:${env:IMAGE_TAG} ${env:DOCKERFILE_PATH}"
         Invoke-Expression $docker_build_command
         "CONTAINER_TAG=${env:ECR_REGISTRY}/${env:ECR_REPOSITORY}:${env:IMAGE_TAG}" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
 
