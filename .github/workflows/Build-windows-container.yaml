@@ -98,6 +98,7 @@ jobs:
 
     - name: Get User Guide from Release
       run: |
+        # Modernization API Repository
         $apiUrl = "https://api.github.com/repos/$env:GITHUB_REPOSITORY/releases/latest"
         
         # Fetch the latest release
@@ -105,19 +106,27 @@ jobs:
         
         # Output the latest tag name
         $latestTag = $latestRelease.tag_name
-        Write-Output "Latest release tag: $latestTag"
+        Write-Output "Latest Release Tag: $latestTag"
         
         # Set Zip File Name
-        $assetName = "v7.2.2.NEDSS.NBS.Modernized.Documentation.zip"
-        $assetUrl = ($latestRelease.assets | Where-Object { $_.name -eq $assetName }).browser_download_url
+        $zip_file_name = "v7.2.2.NEDSS.NBS.Modernized.Documentation.zip"
+        $zip_url = ($latestRelease.assets | Where-Object { $_.name -eq $zip_file_name }).browser_download_url
         
         # Download location
-        $outputPath = "$assetName"
+        $outputPath = "$zip_file_name"
         
         # Download Zip File
-        Invoke-WebRequest -Uri $assetUrl -OutFile $outputPath
+        Invoke-WebRequest -Uri $zip_url -OutFile $outputPath
         
         Write-Output "Downloaded asset to: $outputPath"
+
+        # Extract ZIP to temporary directory
+        Expand-Archive -LiteralPath "$zip_file_name" -Force
+
+        # Move the specific file to the final destination
+        $extractedFilePath = Join-Path -Path v7.2.2.NEDSS.NBS.Modernized.Documentation -ChildPath "v7.2.2.NEDSS.NBS.Modernized.Documentation/NBS 7.2.2 Release Notes.docx"
+        $destinationPath = "NBS 7.2.2 Release Notes.docx"
+        Move-Item -Path $extractedFilePath -Destination . -Force
 
         ls
 
