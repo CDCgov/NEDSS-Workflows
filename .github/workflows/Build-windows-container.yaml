@@ -137,7 +137,6 @@ jobs:
         IMAGE_TAG: "${{ inputs.nbs6_version }}"
         CLASSIC_ZIP_S3_BUCKET: ${{ secrets.CLASSIC_ZIP_S3_BUCKET }}
       run: |
-        Write-Host "${env:CLASSIC_ZIP_S3_BUCKET}/wildfly-10.0.0.Final-${env:IMAGE_TAG}.zip"
         $s3_pull_command = "aws s3 cp s3://${env:CLASSIC_ZIP_S3_BUCKET}/wildfly-10.0.0.Final-${env:IMAGE_TAG}.zip ./cdc-sandbox/nbs6-win-container/"
         Invoke-Expression $s3_pull_command
 
@@ -151,8 +150,9 @@ jobs:
       run: |
         # Build a docker container
         echo "Building image.."
-
-        $docker_build_command = "docker build --build-arg ZIP_NAME="wildfly-10.0.0.Final-"${env:IMAGE_TAG} -t ${env:ECR_REGISTRY}/${env:ECR_REPOSITORY}:${env:IMAGE_TAG} ${env:DOCKERFILE_PATH}"
+        $FULL_ZIP_NAME = "wildfly-10.0.0.Final-${env:IMAGE_TAG}""
+        Write-Host "$FULL_ZIP_NAME"
+        $docker_build_command = "docker build --build-arg ZIP_NAME=$FULL_ZIP_NAME -t ${env:ECR_REGISTRY}/${env:ECR_REPOSITORY}:${env:IMAGE_TAG} ${env:DOCKERFILE_PATH}"
         Invoke-Expression $docker_build_command
         "CONTAINER_TAG=${env:ECR_REGISTRY}/${env:ECR_REPOSITORY}:${env:IMAGE_TAG}" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
 
