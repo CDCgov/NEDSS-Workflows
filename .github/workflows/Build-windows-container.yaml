@@ -126,7 +126,7 @@ jobs:
       env:
         IMAGE_TAG: "${{ inputs.nbs6_version }}"
         CLASSIC_ZIP_S3_BUCKET: "${{ secrets.CLASSIC_ZIP_S3_BUCKET }}"
-      run: aws s3 cp s3://${CLASSIC_ZIP_S3_BUCKET}/wildfly-10.0.0.Final-${IMAGE_TAG}.zip ./cdc-sandbox/nbs6-win-container/
+      run: aws s3 cp s3://${env:CLASSIC_ZIP_S3_BUCKET}/wildfly-10.0.0.Final-${env:IMAGE_TAG}.zip ./cdc-sandbox/nbs6-win-container/
 
     - name: Build and tag ${{ inputs.container_name }} image
       id: build-image
