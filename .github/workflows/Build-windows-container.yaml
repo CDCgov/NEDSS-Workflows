@@ -107,14 +107,14 @@ jobs:
         $latestTag = $latestRelease.tag_name
         Write-Output "Latest release tag: $latestTag"
         
-        # Assuming the asset's name
+        # Set Zip File Name
         $assetName = "v7.2.2.NEDSS.NBS.Modernized.Documentation.zip"
         $assetUrl = ($latestRelease.assets | Where-Object { $_.name -eq $assetName }).browser_download_url
         
         # Download location
-        $outputPath = "C:\$assetName"
+        $outputPath = "$assetName"
         
-        # Download the asset
+        # Download Zip File
         Invoke-WebRequest -Uri $assetUrl -OutFile $outputPath
         
         Write-Output "Downloaded asset to: $outputPath"
