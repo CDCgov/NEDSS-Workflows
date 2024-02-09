@@ -132,7 +132,7 @@ jobs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
 
-    - name: Pull NBS6 Verion ${{ inputs.nbs6_version }}
+    - name: Pull NBS6 ${{ inputs.nbs6_version }} Zip File Version
       env:
         IMAGE_TAG: "${{ inputs.nbs6_version }}"
         CLASSIC_ZIP_S3_BUCKET: ${{ secrets.CLASSIC_ZIP_S3_BUCKET }}
