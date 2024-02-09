@@ -156,20 +156,7 @@ jobs:
         $docker_build_command = "docker build --build-arg ZIP_NAME=$full_zip_name -t ${env:ECR_REGISTRY}/${env:ECR_REPOSITORY}:${env:IMAGE_TAG}"
         Invoke-Expression $docker_build_command
         "CONTAINER_TAG=${env:ECR_REGISTRY}/${env:ECR_REPOSITORY}:${env:IMAGE_TAG}" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
-
-    # Trivy Scan Action not support to run on Windows
-    # - name: Scan container image
-    #   uses: CDCgov/NEDSS-Workflows/.github/actions/trivy-scanner@main
-    #   with:
-    #     container-ref: ${{ env.CONTAINER_TAG }}
-    #     severity: ${{ inputs.severity }}
-    #     upload-to-github-security-tab: ${{ inputs.upload-to-github-security-tab }}
-    #     ignore-unfixed: ${{ inputs.ignore-unfixed }}
-    #     skip-dirs: ${{ inputs.skip-dirs }}
-    #     skip-files: ${{ inputs.skip-files }}
-    #     exit-code: ${{ inputs.exit-code }}
-    #     trivyignores: ${{ inputs.trivyignores }}
-    #     limit-severities-for-sarif: ${{inputs.limit-severities-for-sarif}}
+        
 
     - name: Push ${{ inputs.container_name }} image to Amazon ECR
       id: push-image
