@@ -59,7 +59,8 @@ on:
       trivyignores:
         description: 'Comma-separated list of relative paths in repository to one or more .trivyignore files, for usage see https://aquasecurity.github.io/trivy/v0.19.2/vulnerability/examples/filter/'
         required: false         
-        type: string         
+        type: string
+
     secrets:
       CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID:
         description: "Secret named CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID where ECR resides."
@@ -67,13 +68,19 @@ on:
       ECR_CLASSIC_REPO_BASE_NAME:
         description: "Secret named ECR_CLASSIC_REPO_BASE_NAME describing the ECR base path name."
         required: true
+      CLASSIC_ZIP_S3_BUCKET:
+        description: "Secret named CLASSIC_ZIP_S3_BUCKET providing S3 Bucket for NBS6 ZIP File."
+        required: true
+
     outputs:
       output_image_tag:
         description: "Container image tag" 
         value: ${{ jobs.build.outputs.output_image_tag }}
+
+
 jobs:
   build:
-    name: Build and store container
+    name: Build and Push Container Docker Repository
     runs-on: windows-2019
     defaults:
       run:
@@ -106,7 +113,7 @@ jobs:
         "nbs6_version=$env:IMAGE_TAG" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
         "nbs6_version=$env:IMAGE_TAG" | Out-File -FilePath  $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
-    - name: Set image tag output
+    - name: Set Tmage Tag Output
       id: set-env-variables
       run: |        
         "output_image_tag=$env:nbs6_version" | Out-File -FilePath  $env:GITHUB_OUTPUT -Encoding utf8 -Append
@@ -131,7 +138,7 @@ jobs:
         $s3_pull_command = "aws s3 cp s3://${env:CLASSIC_ZIP_S3_BUCKET}/wildfly-10.0.0.Final-${env:IMAGE_TAG}.zip ./cdc-sandbox/nbs6-win-container/"
         Invoke-Expression $s3_pull_command
 
-    - name: Build and tag ${{ inputs.container_name }} image
+    - name: Build and Tag ${{ inputs.container_name }} Image
       id: build-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
