@@ -15,51 +15,15 @@ on:
         description: NBS6 Version. This will be used to pull NBS ZIP from S3 Bucker in Shared Account and Tag Docker Image
         required: true
         type: string
-      # Container scanning inputs   
-      severity:
-        description: 'Severities of vulnerabilities to be scanned for and displayed (UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL)'
-        required: false  
-        default: 'CRITICAL,HIGH'
+      zip_file_name:
+          description: Full zip file name and file formate to be downloaded from latest release in Modernization Repository
+          required: true
+          type: string
+      user_guide_doc_name:
+        description: Full user guide name file format to be configured in NBS6 container
+        required: true
         type: string
-      limit-severities-for-sarif:
-        description: 'By default SARIF format enforces output of all vulnerabilities regardless of configured severities. To override this behavior set this parameter to true'
-        required: false  
-        default: true
-        type: boolean
-      upload-to-github-security-tab:
-        description: 'Upload results to GitHub security tab?'
-        required: false
-        default: true
-        type: boolean
-      ignore-unfixed:
-        description: Ignore unpatched/unfixed vulnerabilities
-        required: false
-        default: false
-        type: boolean 
-      skip-dirs:
-        description: 'Comma separated list of directories where traversal is skipped'
-        required: false 
-        default: ''
-        type: string
-      skip-files:
-        description: 'Comma separated list of files where traversal is skipped'
-        required: false  
-        default: ''
-        type: string
-      timeout:
-        description: 'Scan timeout duration'
-        required: false  
-        default: '10m0s'
-        type: string
-      exit-code:
-        description: 'Exit code when specified vulnerabilities are found (0).'
-        required: false  
-        default: '0'
-        type: string
-      trivyignores:
-        description: 'Comma-separated list of relative paths in repository to one or more .trivyignore files, for usage see https://aquasecurity.github.io/trivy/v0.19.2/vulnerability/examples/filter/'
-        required: false         
-        type: string
+
 
     secrets:
       CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID:
@@ -96,7 +60,10 @@ jobs:
       uses: actions/checkout@v3
 
 
-    - name: Get User Guide from Release
+    - name: Get User Guide from This Repository Release Assets
+      env:
+        ZIP_FILE_NAME: "${{ inputs.zip_file_name }}"
+        USER_GUIDE_DOC_NAME: ${{ inputs.user_guide_doc_name }}
       run: |
         # Modernization API Repository
         $apiUrl = "https://api.github.com/repos/$env:GITHUB_REPOSITORY/releases/latest"
@@ -109,27 +76,23 @@ jobs:
         Write-Output "Latest Release Tag: $latestTag"
         
         # Set Zip File Name
-        $zip_file_name = "v7.2.2.NEDSS.NBS.Modernized.Documentation.zip"
-        $zip_url = ($latestRelease.assets | Where-Object { $_.name -eq $zip_file_name }).browser_download_url
-        
-        # Download location
-        $outputPath = "$zip_file_name"
+        $zip_url = ($latestRelease.assets | Where-Object { $_.name -eq $env:ZIP_FILE_NAME }).browser_download_url
         
         # Download Zip File
-        Invoke-WebRequest -Uri $zip_url -OutFile $outputPath
+        Invoke-WebRequest -Uri $zip_url -OutFile $env:ZIP_FILE_NAME
         
-        Write-Output "Downloaded asset to: $outputPath"
+        Write-Output "Downloaded asset to: $env:ZIP_FILE_NAME"
 
         # Extract ZIP to temporary directory
-        Expand-Archive -LiteralPath "$zip_file_name" -Force
+        Expand-Archive -LiteralPath "$env:ZIP_FILE_NAME" -Force
+
+        $zip_folder = ($env:ZIP_FILE_NAME -split '.z')[1]
 
         # Move the specific file to the final destination
-        $extractedFilePath = Join-Path -Path v7.2.2.NEDSS.NBS.Modernized.Documentation -ChildPath "v7.2.2.NEDSS.NBS.Modernized.Documentation/NBS 7.2.2 Release Notes.docx"
-        $destinationPath = "NBS 7.2.2 Release Notes.docx"
-        Move-Item -Path $extractedFilePath -Destination . -Force
+        $user_guide_path = Join-Path -Path $zip_folder -ChildPath "$zip_folder/$env:USER_GUIDE_DOC_NAME"
+        Move-Item -Path $user_guide_path -Destination . -Force
 
         ls
-
 
     # - name: Configure AWS credentials
     #   uses: aws-actions/configure-aws-credentials@v1
