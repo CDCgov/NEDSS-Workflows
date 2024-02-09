@@ -87,7 +87,7 @@ jobs:
         Expand-Archive -LiteralPath "$env:ZIP_FILE_NAME" -Force
 
         Write-Output "$env:ZIP_FILE_NAME"
-        $zip_folder = ($env:ZIP_FILE_NAME -split '.z')[1]
+        $zip_folder = $env:ZIP_FILE_NAME.Trim(".zip")
 
         ls
 
