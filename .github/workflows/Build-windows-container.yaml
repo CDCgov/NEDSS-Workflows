@@ -59,6 +59,10 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
+    - name: Configure Environment Variables
+      run: |     
+        $github_repo_name = ($env:GITHUB_REPOSITORY -split '/')[1]
+        "github_repo_name=$github_repo_name" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
 
     - name: Get User Guide from This Repository Release Assets
       env:
@@ -87,11 +91,7 @@ jobs:
         # Extract ZIP to temporary directory
         Expand-Archive -LiteralPath "$env:ZIP_FILE_NAME" -Force
 
-        Write-Output "$env:ZIP_FILE_NAME"
-        $zip_folder = $env:ZIP_FILE_NAME.Trim(".zip")
-
-        Write-Output "$zip_folder"
-        Write-Output "$zip_folder/$env:USER_GUIDE_DOC_NAME"
+        Write-Output "$env:ZIP_FILE_NAME"        $zip_folder = $env:ZIP_FILE_NAME.Trim(".zip")
 
         # Move the specific file to the final destination
         $user_guide_path = Join-Path -Path $zip_folder -ChildPath "$zip_folder/$env:USER_GUIDE_DOC_NAME"
@@ -141,7 +141,7 @@ jobs:
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: ${{ secrets.ECR_CLASSIC_REPO_BASE_NAME }}/${{ inputs.container_name }}
-        IMAGE_TAG: "${{ env.nbs6_version }}"
+        IMAGE_TAG: "${{ inputs.nbs6_version }}"
       run: |
         echo "Pushing image to ECR..."
         docker push ${env:ECR_REGISTRY}/${env:ECR_REPOSITORY}:${env:IMAGE_TAG}
