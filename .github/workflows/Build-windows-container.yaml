@@ -91,7 +91,8 @@ jobs:
         # Extract ZIP to temporary directory
         Expand-Archive -LiteralPath "$env:ZIP_FILE_NAME" -Force
 
-        Write-Output "$env:ZIP_FILE_NAME"        $zip_folder = $env:ZIP_FILE_NAME.Trim(".zip")
+        Write-Output "$env:ZIP_FILE_NAME"        
+        $zip_folder = $env:ZIP_FILE_NAME.Trim(".zip")
 
         # Move the specific file to the final destination
         $user_guide_path = Join-Path -Path $zip_folder -ChildPath "$zip_folder/$env:USER_GUIDE_DOC_NAME"
