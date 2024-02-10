@@ -59,12 +59,14 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
+      
     - name: Configure Environment Variables
       run: |     
         $github_repo_name = ($env:GITHUB_REPOSITORY -split '/')[1]
         "github_repo_name=$github_repo_name" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
 
-    - name: Get User Guide from This Repository Release Assets
+
+    - name: Get User Guide from This Repository Latest Release Assets
       env:
         ZIP_FILE_NAME: "${{ inputs.zip_file_name }}"
         USER_GUIDE_DOC_NAME: ${{ inputs.user_guide_doc_name }}
