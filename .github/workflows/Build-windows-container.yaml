@@ -139,7 +139,7 @@ jobs:
         Write-Output "User Guide: ${env:USER_GUIDE_DOC_NAME}"
 
         $full_zip_name = "wildfly-10.0.0.Final-$env:IMAGE_TAG.zip"
-        $docker_build_command = "docker build --build-arg ZIP_NAME=$full_zip_name --build-arg USER_GUIDE_NAME=${env:USER_GUIDE_DOC_NAME} -t ${env:ECR_REGISTRY}/${env:ECR_REPOSITORY}:${env:IMAGE_TAG} ${env:DOCKERFILE_PATH}"
+        $docker_build_command = "docker build --build-arg ZIP_NAME=$full_zip_name --build-arg USER_GUIDE_NAME="${env:USER_GUIDE_DOC_NAME}" -t ${env:ECR_REGISTRY}/${env:ECR_REPOSITORY}:${env:IMAGE_TAG} ${env:DOCKERFILE_PATH}"
         Write-Output "FULL DOCKER COMMAND: $docker_build_command"
         Invoke-Expression $docker_build_command
 
