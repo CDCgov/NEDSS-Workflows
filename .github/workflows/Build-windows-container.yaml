@@ -12,15 +12,15 @@ on:
         required: true
         type: string
       nbs6_version:
-        description: NBS6 Version. This will be used to pull NBS ZIP from S3 Bucker in Shared Account and Tag Docker Image
+        description: "NBS6 Version. This will be used to pull NBS ZIP from S3 Bucker in Shared Account and Tag Docker Image"
         required: true
         type: string
       zip_file_name:
-          description: Full zip file name and file formate to be downloaded from latest release in Modernization Repository
+          description: "Full zip file name and file format to be downloaded from latest Release Assets in Modernization Repository"
           required: true
           type: string
       user_guide_doc_name:
-        description: Full user guide name file format to be configured in NBS6 container
+        description: "Full user guide name with file format to be configured in NBS6 container"
         required: true
         type: string
 
