@@ -1,0 +1,153 @@
+name: Build and store a microservice container
+on:
+  workflow_call:
+    inputs:
+      # container build inputs
+      container_name:
+        description: "Name of container in ECR."
+        required: true
+        type: string
+      dockerfile_relative_path:
+        description: "Relative path to dockerfile being built (use '-f' docker argument if the dockerfile referenced from the root directory)."
+        required: true
+        type: string
+      nbs6_version:
+        description: "NBS6 Version. This will be used to pull NBS ZIP from S3 Bucker in Shared Account and Tag Docker Image"
+        required: true
+        type: string
+      zip_file_name:
+          description: "Full zip file name and file format to be downloaded from latest Release Assets in Modernization Repository"
+          required: true
+          type: string
+      user_guide_doc_name:
+        description: "Full user guide name with file format to be configured in NBS6 container"
+        required: true
+        type: string
+
+
+    secrets:
+      CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID:
+        description: "Secret named CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID where ECR resides."
+        required: true
+      ECR_CLASSIC_REPO_BASE_NAME:
+        description: "Secret named ECR_CLASSIC_REPO_BASE_NAME describing the ECR base path name."
+        required: true
+      CLASSIC_ZIP_S3_BUCKET:
+        description: "Secret named CLASSIC_ZIP_S3_BUCKET providing S3 Bucket for NBS6 ZIP File."
+        required: true
+      USER_GUIDE_S3_BUCKET:
+          description: "Secret named USER_GUIDE_S3_BUCKET providing S3 Bucket for User Guide File."
+          required: true
+
+
+jobs:
+  build:
+    name: Build and Push Container Docker Repository
+    runs-on: windows-2019
+    defaults:
+      run:
+        shell: pwsh
+
+    # These permissions are needed to interact with GitHub's OIDC Token endpoint.
+    # New comment
+    permissions:
+      id-token: write
+      contents: read
+      security-events: write
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+
+    - name: Configure Environment Variables
+      run: |     
+        $github_repo_name = ($env:GITHUB_REPOSITORY -split '/')[1]
+        "github_repo_name=$github_repo_name" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
+
+
+    - name: Get User Guide from This Repository Latest Release Assets
+      env:
+        ZIP_FILE_NAME: "${{ inputs.zip_file_name }}"
+        USER_GUIDE_DOC_NAME: ${{ inputs.user_guide_doc_name }}
+        DOCKERFILE_PATH: "${{ inputs.dockerfile_relative_path}}"
+      run: |
+        # Modernization API Repository
+        $apiUrl = "https://api.github.com/repos/$env:GITHUB_REPOSITORY/releases/latest"
+        
+        # Fetch the latest release
+        $latestRelease = Invoke-RestMethod -Uri $apiUrl
+        
+        # Output the latest tag name
+        $latestTag = $latestRelease.tag_name
+        Write-Output "Latest Release Tag: $latestTag"
+        
+        # Set Zip File Name
+        $zip_url = ($latestRelease.assets | Where-Object { $_.name -eq $env:ZIP_FILE_NAME }).browser_download_url
+        
+        # Download Zip File
+        Invoke-WebRequest -Uri $zip_url -OutFile $env:ZIP_FILE_NAME
+        
+        Write-Output "Downloaded asset to: $env:ZIP_FILE_NAME"
+
+        # Extract ZIP to temporary directory
+        Expand-Archive -LiteralPath "$env:ZIP_FILE_NAME" -Force
+
+        Write-Output "$env:ZIP_FILE_NAME"        
+        $zip_folder = $env:ZIP_FILE_NAME.Trim(".zip")
+
+        # Move the specific file to the final destination
+        $user_guide_path = Join-Path -Path $zip_folder -ChildPath "$zip_folder/$env:USER_GUIDE_DOC_NAME"
+        Move-Item -Path $user_guide_path -Destination $env:DOCKERFILE_PATH -Force
+
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        role-to-assume: "arn:aws:iam::${{ secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID }}:role/cdc-github-${{ env.github_repo_name }}-dev-role"
+        role-session-name: deploy-infrastructure
+        aws-region: us-east-1
+
+
+    - name: Pull NBS6 ${{ inputs.nbs6_version }} Zip File
+      env:
+        IMAGE_TAG: "${{ inputs.nbs6_version }}"
+        CLASSIC_ZIP_S3_BUCKET: ${{ secrets.CLASSIC_ZIP_S3_BUCKET }}
+        DOCKERFILE_PATH: "${{ inputs.dockerfile_relative_path}}"
+      run: |
+        $s3_pull_command = "aws s3 cp s3://${env:CLASSIC_ZIP_S3_BUCKET}/wildfly-10.0.0.Final-${env:IMAGE_TAG}.zip ${env:DOCKERFILE_PATH}"
+        Invoke-Expression $s3_pull_command
+
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+
+    - name: Build and Tag ${{ inputs.container_name }} Image
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ secrets.ECR_CLASSIC_REPO_BASE_NAME }}/${{ inputs.container_name }}
+        IMAGE_TAG: "${{ inputs.nbs6_version }}"
+        DOCKERFILE_PATH: "${{ inputs.dockerfile_relative_path}}"
+        USER_GUIDE_DOC_NAME: "${{ inputs.USER_GUIDE_DOC_NAME}}"
+      run: |
+        # Build a docker container
+        echo "Building image.."
+
+        $full_zip_name = "wildfly-10.0.0.Final-$env:IMAGE_TAG"
+        $docker_build_command = "docker build --build-arg ZIP_NAME=$full_zip_name --build-arg USER_GUIDE_NAME='${env:USER_GUIDE_DOC_NAME}' -t ${env:ECR_REGISTRY}/${env:ECR_REPOSITORY}:${env:IMAGE_TAG} ${env:DOCKERFILE_PATH}"
+        Invoke-Expression $docker_build_command
+
+
+    - name: Push ${{ inputs.container_name }} image to Amazon ECR
+      id: push-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ secrets.ECR_CLASSIC_REPO_BASE_NAME }}/${{ inputs.container_name }}
+        IMAGE_TAG: "${{ inputs.nbs6_version }}"
+      run: |
+        echo "Pushing image to ECR..."
+        docker push ${env:ECR_REGISTRY}/${env:ECR_REPOSITORY}:${env:IMAGE_TAG}
+        "image=${env:ECR_REGISTRY}/${env:ECR_REPOSITORY}:${env:IMAGE_TAG}" | Out-File -FilePath  $env:GITHUB_OUTPUT -Encoding utf8 -Append
