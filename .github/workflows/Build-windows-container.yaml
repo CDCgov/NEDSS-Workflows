@@ -60,7 +60,7 @@ jobs:
         "github_repo_name=$github_repo_name" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
 
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4.0.2
+      uses: aws-actions/configure-aws-credentials@v1
       with:
         role-to-assume: "arn:aws:iam::${{ secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID }}:role/cdc-github-${{ env.github_repo_name }}-dev-role"
         role-session-name: deploy-infrastructure
