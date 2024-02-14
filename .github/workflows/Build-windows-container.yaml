@@ -28,12 +28,6 @@ on:
         required: true
         type: string
         default: latest
-
-    secrets:
-      NBS6_ZIP_S3_BUCKET_NAME:
-        description: "Secret named NBS6_ZIP_S3_BUCKET_NAME providing S3 Bucket for NBS6 ZIP File."
-        required: true
-
         
 jobs:
   build:
