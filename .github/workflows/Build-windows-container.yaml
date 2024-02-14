@@ -92,6 +92,7 @@ jobs:
       run: |
         # Build a docker container
         echo "Building image.."
+        Write-Output = "docker build --build-arg S3_ZIP_NAME=$full_s3_zip_name --build-arg USER_GUIDE_DOC_NAME='${env:USER_GUIDE_DOC_NAME}' --build-arg GITHUB_RELEASE_TAG='${env:GITHUB_RELEASE_TAG}' --build-arg GITHUB_ZIP_FILE_NAME='${env:$GITHUB_ZIP_FILE_NAME}' -t ${env:QUAY_REGISTRY}/${env:QUAY_REPOSITORY}:${env:IMAGE_TAG} ${env:DOCKERFILE_PATH}"
 
         $full_s3_zip_name = "wildfly-10.0.0.Final-$env:IMAGE_TAG"
         $docker_build_command = "docker build --build-arg S3_ZIP_NAME=$full_s3_zip_name --build-arg USER_GUIDE_DOC_NAME='${env:USER_GUIDE_DOC_NAME}' --build-arg GITHUB_RELEASE_TAG='${env:GITHUB_RELEASE_TAG}' --build-arg GITHUB_ZIP_FILE_NAME='${env:$GITHUB_ZIP_FILE_NAME}' -t ${env:QUAY_REGISTRY}/${env:QUAY_REPOSITORY}:${env:IMAGE_TAG} ${env:DOCKERFILE_PATH}"
