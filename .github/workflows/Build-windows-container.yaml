@@ -30,8 +30,8 @@ on:
         default: latest
 
     secrets:
-      CLASSIC_ZIP_S3_BUCKET:
-        description: "Secret named CLASSIC_ZIP_S3_BUCKET providing S3 Bucket for NBS6 ZIP File."
+      NBS6_ZIP_S3_BUCKET_NAME:
+        description: "Secret named NBS6_ZIP_S3_BUCKET_NAME providing S3 Bucket for NBS6 ZIP File."
         required: true
 
         
@@ -66,10 +66,10 @@ jobs:
     - name: Pull NBS6 ${{ inputs.nbs6_version }} Zip File
       env:
         IMAGE_TAG: "${{ inputs.nbs6_version }}"
-        CLASSIC_ZIP_S3_BUCKET: ${{ secrets.CLASSIC_ZIP_S3_BUCKET }}
+        NBS6_ZIP_S3_BUCKET_NAME: ${{ secrets.NBS6_ZIP_S3_BUCKET_NAME }}
         DOCKERFILE_PATH: "${{ inputs.dockerfile_relative_path}}"
       run: |
-        $s3_pull_command = "aws s3 cp s3://${env:CLASSIC_ZIP_S3_BUCKET}/wildfly-10.0.0.Final-${env:IMAGE_TAG}.zip ${env:DOCKERFILE_PATH}"
+        $s3_pull_command = "aws s3 cp s3://${env:NBS6_ZIP_S3_BUCKET_NAME}/nbs/wildfly-10.0.0.Final-${env:IMAGE_TAG}.zip ${env:DOCKERFILE_PATH}"
         Invoke-Expression $s3_pull_command
 
 
