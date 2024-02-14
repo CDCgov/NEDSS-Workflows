@@ -23,11 +23,16 @@ on:
         description: "Full user guide name with file format to be configured in NBS6 container"
         required: true
         type: string
-      release_tag:
+      github_release_tag:
         description: "Release tag from which zip file will be downloaded from. Default is always latest"
         required: true
         type: string
         default: latest
+    secrets:
+      NBS6_ZIP_S3_BUCKET_NAME:
+        description: "Secret named NBS6_ZIP_S3_BUCKET_NAME providing S3 Bucket for NBS6 ZIP File."
+        required: true
+
         
 jobs:
   build:
@@ -48,15 +53,6 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4.1.1
 
-
-    - name: Configure Environment Variables
-      env:
-        RELEASE_TAG: ${{ inputs.release_tag }}
-      run: |     
-        $github_api_Url = "https://api.github.com/repos/$env:GITHUB_REPOSITORY/releases/$env:RELEASE_TAG"
-        "github_api_Url=$github_api_Url" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
-        
-
     - name: Pull NBS6 ${{ inputs.nbs6_version }} Zip File
       env:
         IMAGE_TAG: "${{ inputs.nbs6_version }}"
@@ -75,13 +71,14 @@ jobs:
         IMAGE_TAG: "${{ inputs.nbs6_version }}"
         DOCKERFILE_PATH: "${{ inputs.dockerfile_relative_path}}"
         USER_GUIDE_DOC_NAME: "${{ inputs.USER_GUIDE_DOC_NAME}}"
+        GITHUB_RELEASE_TAG: "${{ inputs.github_release_tag }}"
         GITHUB_ZIP_FILE_NAME: "${{ inputs.github_zip_file_name }}"
       run: |
         # Build a docker container
         echo "Building image.."
 
         $full_s3_zip_name = "wildfly-10.0.0.Final-$env:IMAGE_TAG"
-        $docker_build_command = "docker build --build-arg S3_ZIP_NAME=$full_s3_zip_name --build-arg USER_GUIDE_NAME='${env:USER_GUIDE_DOC_NAME}' --build-arg GITHUB_API_URL='${env:github_api_Url}' --build-arg GITHUB_ZIP_FILE_NAME='${env:$GITHUB_ZIP_FILE_NAME}' -t ${env:QUAY_REGISTRY}/${env:QUAY_REPOSITORY}:${env:IMAGE_TAG} ${env:DOCKERFILE_PATH}"
+        $docker_build_command = "docker build --build-arg S3_ZIP_NAME=$full_s3_zip_name --build-arg USER_GUIDE_DOC_NAME='${env:USER_GUIDE_DOC_NAME}' --build-arg GITHUB_RELEASE_TAG='${env:GITHUB_RELEASE_TAG}' --build-arg GITHUB_ZIP_FILE_NAME='${env:$GITHUB_ZIP_FILE_NAME}' -t ${env:QUAY_REGISTRY}/${env:QUAY_REPOSITORY}:${env:IMAGE_TAG} ${env:DOCKERFILE_PATH}"
         Invoke-Expression $docker_build_command
 
 
