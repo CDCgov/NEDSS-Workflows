@@ -15,6 +15,7 @@ on:
         description: "NBS6 Version. This will be used to pull NBS ZIP from S3 Bucker in Shared Account and Tag Docker Image"
         required: true
         type: string
+      # User guide inputs
       github_zip_file_name:
           description: "Full zip file name and file format to be downloaded from latest Release Assets in Modernization Repository"
           required: true
@@ -28,6 +29,7 @@ on:
         required: true
         type: string
         default: latest
+      # quay inputs
       quay_repository:
           description: "Quay Repository"
           required: true
@@ -84,8 +86,7 @@ jobs:
         Invoke-Expression $s3_pull_command
 
 
-    - name: Build and Tag ${{ inputs.image_name }} Image
-      id: build-image
+    - name: Build and Push ${{ inputs.image_name }} Image
       env:
         QUAY_REPOSITORY: ${{ inputs.quay_repository }}/${{ inputs.image_name }}
         IMAGE_TAG: "${{ inputs.nbs6_version }}"
@@ -98,11 +99,7 @@ jobs:
         echo "Building image.."
         $full_s3_zip_name = "wildfly-10.0.0.Final-$env:IMAGE_TAG"
 
-        Write-Output = "docker build --build-arg S3_ZIP_NAME=$full_s3_zip_name --build-arg USER_GUIDE_DOC_NAME='${env:USER_GUIDE_DOC_NAME}' --build-arg GITHUB_RELEASE_TAG='${env:GITHUB_RELEASE_TAG}' --build-arg GITHUB_ZIP_FILE_NAME='${env:$GITHUB_ZIP_FILE_NAME}' -t ${env:QUAY_REPOSITORY}:${env:IMAGE_TAG} ${env:DOCKERFILE_PATH}"
-
         $docker_build_command = "docker build --build-arg S3_ZIP_NAME=$full_s3_zip_name --build-arg USER_GUIDE_DOC_NAME='${env:USER_GUIDE_DOC_NAME}' --build-arg GITHUB_RELEASE_TAG='${env:GITHUB_RELEASE_TAG}' --build-arg GITHUB_ZIP_FILE_NAME='${env:$GITHUB_ZIP_FILE_NAME}' -t ${env:QUAY_REPOSITORY}:${env:IMAGE_TAG} ${env:DOCKERFILE_PATH}"
         Invoke-Expression $docker_build_command
 
-
-    - name: Push Image to Quay.io
-      run: docker push quay.io/${{ inputs.quay_repository }}/${{ inputs.image_name }}:${{ inputs.nbs6_version }}
+        docker push quay.io/${{ inputs.quay_repository }}/${{ inputs.image_name }}:${{ inputs.nbs6_version }}
