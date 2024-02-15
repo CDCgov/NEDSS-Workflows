@@ -95,4 +95,4 @@ jobs:
 
 
     - name: Push Image to Quay.io
-      run: docker push quay.io/${{ inputs.quay_repository }}/${{ inputs.image_name }}:${{ inputs.nbs6_version }}
+      run: docker push ${{ inputs.quay_repository }}/${{ inputs.image_name }}:${{ inputs.nbs6_version }}
