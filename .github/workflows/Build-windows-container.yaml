@@ -94,9 +94,9 @@ jobs:
         echo "Building image.."
         $full_s3_zip_name = "wildfly-10.0.0.Final-$env:IMAGE_TAG"
 
-        Write-Output = "docker build --build-arg S3_ZIP_NAME=$full_s3_zip_name --build-arg USER_GUIDE_DOC_NAME='${{inputs.USER_GUIDE_DOC_NAME}}' --build-arg GITHUB_RELEASE_TAG='${{inputs.github_release_tag}} --build-arg GITHUB_ZIP_FILE_NAME=${{inputs.github_zip_file_name}}' -t ${{inputs.quay_repository}}/${{inputs.image_name}}:${{inputs.nbs6_version}} ${{inputs.dockerfile_relative_path}}"
+        Write-Output = "docker build --build-arg S3_ZIP_NAME=$full_s3_zip_name --build-arg USER_GUIDE_DOC_NAME='${{inputs.USER_GUIDE_DOC_NAME}}' --build-arg GITHUB_RELEASE_TAG='${{inputs.github_release_tag}}' --build-arg GITHUB_ZIP_FILE_NAME='${{inputs.github_zip_file_name}}' -t ${{inputs.quay_repository}}/${{inputs.image_name}}:${{inputs.nbs6_version}} ${{inputs.dockerfile_relative_path}}"
 
-        $docker_build_command = "docker build --build-arg S3_ZIP_NAME=$full_s3_zip_name --build-arg USER_GUIDE_DOC_NAME='${{inputs.USER_GUIDE_DOC_NAME}}' --build-arg GITHUB_RELEASE_TAG='${{inputs.github_release_tag}} --build-arg GITHUB_ZIP_FILE_NAME=${{inputs.github_zip_file_name}}' -t ${{inputs.quay_repository}}/${{inputs.image_name}}:${{inputs.nbs6_version}} ${{inputs.dockerfile_relative_path}}"
+        $docker_build_command = "docker build --build-arg S3_ZIP_NAME=$full_s3_zip_name --build-arg USER_GUIDE_DOC_NAME='${{inputs.USER_GUIDE_DOC_NAME}}' --build-arg GITHUB_RELEASE_TAG='${{inputs.github_release_tag}}' --build-arg GITHUB_ZIP_FILE_NAME='${{inputs.github_zip_file_name}}' -t ${{inputs.quay_repository}}/${{inputs.image_name}}:${{inputs.nbs6_version}} ${{inputs.dockerfile_relative_path}}"
         Invoke-Expression $docker_build_command
 
     - name: Login to Quay.io with Robot Account
