@@ -42,6 +42,12 @@ on:
       CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID:
         description: "Secret named CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID where ECR resides."
         required: true
+      QUAY_ROBOT_USERNAME:
+          description: "Quay Username"
+          required: true
+      QUAY_ROBOT_TOKEN:
+          description: "Quay Password"
+          required: true
 
         
 jobs:
@@ -70,29 +76,31 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4.0.2
       with:
-        role-to-assume: "arn:aws:iam::${{ secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID }}:role/cdc-github-${{ env.github_repo_name }}-dev-role"
+        role-to-assume: "arn:aws:iam::${{secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID}}:role/cdc-github-${{env.github_repo_name}}-dev-role"
         role-session-name: deploy-infrastructure
         aws-region: us-east-1
   
-    - name: Pull NBS6 ${{ inputs.nbs6_version }} Zip File
+    - name: Pull NBS6 ${{inputs.nbs6_version}} Zip File
       run: |
-        $s3_pull_command = "aws s3 cp s3://${{ secrets.NBS6_ZIP_S3_BUCKET_NAME }}/nbs/wildfly-10.0.0.Final-${{ inputs.nbs6_version }}.zip ${{ inputs.dockerfile_relative_path}}"
+        $s3_pull_command = "aws s3 cp s3://${{secrets.NBS6_ZIP_S3_BUCKET_NAME}}/nbs/wildfly-10.0.0.Final-${{inputs.nbs6_version}}.zip ${{inputs.dockerfile_relative_path}}"
         Invoke-Expression $s3_pull_command
 
 
-    - name: Build and Tag ${{ inputs.image_name }} Image
+    - name: Build and Tag ${{inputs.image_name}} Image
       env:
-        IMAGE_TAG: "${{ inputs.nbs6_version }}"
+        IMAGE_TAG: "${{inputs.nbs6_version}}"
       run: |
         # Build a docker container
         echo "Building image.."
         $full_s3_zip_name = "wildfly-10.0.0.Final-$env:IMAGE_TAG"
 
-        Write-Output = "docker build --build-arg S3_ZIP_NAME=$full_s3_zip_name --build-arg USER_GUIDE_DOC_NAME='${{ inputs.USER_GUIDE_DOC_NAME}}' --build-arg GITHUB_RELEASE_TAG='${{ inputs.github_release_tag }} --build-arg GITHUB_ZIP_FILE_NAME=${{ inputs.github_zip_file_name }}' -t ${{ inputs.quay_repository }}/${{ inputs.image_name }}:${{ inputs.nbs6_version }} ${{ inputs.dockerfile_relative_path }}"
+        Write-Output = "docker build --build-arg S3_ZIP_NAME=$full_s3_zip_name --build-arg USER_GUIDE_DOC_NAME='${{inputs.USER_GUIDE_DOC_NAME}}' --build-arg GITHUB_RELEASE_TAG='${{inputs.github_release_tag}} --build-arg GITHUB_ZIP_FILE_NAME=${{inputs.github_zip_file_name}}' -t ${{inputs.quay_repository}}/${{inputs.image_name}}:${{inputs.nbs6_version}} ${{inputs.dockerfile_relative_path}}"
 
-        $docker_build_command = "docker build --build-arg S3_ZIP_NAME=$full_s3_zip_name --build-arg USER_GUIDE_DOC_NAME='${{ inputs.USER_GUIDE_DOC_NAME}}' --build-arg GITHUB_RELEASE_TAG='${{ inputs.github_release_tag }} --build-arg GITHUB_ZIP_FILE_NAME=${{ inputs.github_zip_file_name }}' -t ${{ inputs.quay_repository }}/${{ inputs.image_name }}:${{ inputs.nbs6_version }} ${{ inputs.dockerfile_relative_path }}"
+        $docker_build_command = "docker build --build-arg S3_ZIP_NAME=$full_s3_zip_name --build-arg USER_GUIDE_DOC_NAME='${{inputs.USER_GUIDE_DOC_NAME}}' --build-arg GITHUB_RELEASE_TAG='${{inputs.github_release_tag}} --build-arg GITHUB_ZIP_FILE_NAME=${{inputs.github_zip_file_name}}' -t ${{inputs.quay_repository}}/${{inputs.image_name}}:${{inputs.nbs6_version}} ${{inputs.dockerfile_relative_path}}"
         Invoke-Expression $docker_build_command
 
+    - name: Login to Quay.io with Robot Account
+      run: docker login -u=${{secrets.QUAY_ROBOT_USERNAME}} -p=${{secrets.QUAY_ROBOT_TOKEN}} quay.io
 
     - name: Push Image to Quay.io
-      run: docker push ${{ inputs.quay_repository }}/${{ inputs.image_name }}:${{ inputs.nbs6_version }}
+      run: docker push ${{inputs.quay_repository}}/${{inputs.image_name}}:${{inputs.nbs6_version}}
