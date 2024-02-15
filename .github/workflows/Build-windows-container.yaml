@@ -53,12 +53,10 @@ jobs:
         shell: pwsh
 
     # These permissions are needed to interact with GitHub's OIDC Token endpoint.
-    # New comment
     permissions:
       id-token: write
       contents: read
       security-events: write
-
 
     steps:
     - name: Checkout
@@ -77,29 +75,24 @@ jobs:
         aws-region: us-east-1
   
     - name: Pull NBS6 ${{ inputs.nbs6_version }} Zip File
-      env:
-        IMAGE_TAG: "${{ inputs.nbs6_version }}"
-        NBS6_ZIP_S3_BUCKET_NAME: ${{ secrets.NBS6_ZIP_S3_BUCKET_NAME }}
-        DOCKERFILE_PATH: "${{ inputs.dockerfile_relative_path}}"
       run: |
-        $s3_pull_command = "aws s3 cp s3://${env:NBS6_ZIP_S3_BUCKET_NAME}/nbs/wildfly-10.0.0.Final-${env:IMAGE_TAG}.zip ${env:DOCKERFILE_PATH}"
+        $s3_pull_command = "aws s3 cp s3://${{ secrets.NBS6_ZIP_S3_BUCKET_NAME }}/nbs/wildfly-10.0.0.Final-${{ inputs.nbs6_version }}.zip ${{ inputs.dockerfile_relative_path}}"
         Invoke-Expression $s3_pull_command
 
 
-    - name: Build and Push ${{ inputs.image_name }} Image
+    - name: Build and Tag ${{ inputs.image_name }} Image
       env:
-        QUAY_REPOSITORY: ${{ inputs.quay_repository }}/${{ inputs.image_name }}
         IMAGE_TAG: "${{ inputs.nbs6_version }}"
-        DOCKERFILE_PATH: "${{ inputs.dockerfile_relative_path}}"
-        USER_GUIDE_DOC_NAME: "${{ inputs.USER_GUIDE_DOC_NAME}}"
-        GITHUB_RELEASE_TAG: "${{ inputs.github_release_tag }}"
-        GITHUB_ZIP_FILE_NAME: "${{ inputs.github_zip_file_name }}"
       run: |
         # Build a docker container
         echo "Building image.."
         $full_s3_zip_name = "wildfly-10.0.0.Final-$env:IMAGE_TAG"
 
-        $docker_build_command = "docker build --build-arg S3_ZIP_NAME=$full_s3_zip_name --build-arg USER_GUIDE_DOC_NAME='${env:USER_GUIDE_DOC_NAME}' --build-arg GITHUB_RELEASE_TAG='${env:GITHUB_RELEASE_TAG}' --build-arg GITHUB_ZIP_FILE_NAME='${env:$GITHUB_ZIP_FILE_NAME}' -t ${env:QUAY_REPOSITORY}:${env:IMAGE_TAG} ${env:DOCKERFILE_PATH}"
+        Write-Output = "docker build --build-arg S3_ZIP_NAME=$full_s3_zip_name --build-arg USER_GUIDE_DOC_NAME=${{ inputs.USER_GUIDE_DOC_NAME}} --build-arg GITHUB_RELEASE_TAG=${{ inputs.github_release_tag }} --build-arg GITHUB_ZIP_FILE_NAME=${{ inputs.github_zip_file_name }} -t quay.io/${{ inputs.quay_repository }}/${{ inputs.image_name }}:${{ inputs.nbs6_version }} ${{ inputs.dockerfile_relative_path }}"
+
+        $docker_build_command = "docker build --build-arg S3_ZIP_NAME=$full_s3_zip_name --build-arg USER_GUIDE_DOC_NAME=${{ inputs.USER_GUIDE_DOC_NAME}} --build-arg GITHUB_RELEASE_TAG=${{ inputs.github_release_tag }} --build-arg GITHUB_ZIP_FILE_NAME=${{ inputs.github_zip_file_name }} -t quay.io/${{ inputs.quay_repository }}/${{ inputs.image_name }}:${{ inputs.nbs6_version }} ${{ inputs.dockerfile_relative_path }}"
         Invoke-Expression $docker_build_command
 
-        docker push quay.io/${{ inputs.quay_repository }}/${{ inputs.image_name }}:${{ inputs.nbs6_version }}
+        
+    - name: Push Image to Quay.io
+      run: docker push quay.io/${{ inputs.quay_repository }}/${{ inputs.image_name }}:${{ inputs.nbs6_version }}
