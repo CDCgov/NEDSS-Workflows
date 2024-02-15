@@ -104,16 +104,5 @@ jobs:
         Invoke-Expression $docker_build_command
 
 
-    - name: Push To quay.io
-      id: push-to-quay
-      uses: redhat-actions/push-to-registry@v2.7.1
-      with:
-        image: ${{ inputs.image_name }}
-        tags: ${{ inputs.nbs6_version }}
-        registry: quay.io/${{ inputs.quay_repository }}
-        username: ${{ secrets.USERNAME_NAME }}
-        password: ${{ secrets.REGISTRY_PASSWORD }}
-
-
-    - name: Image URL
-      run: echo "Image pushed to ${{ steps.push-to-quay.outputs.registry-paths }}"
+    - name: Push Image to Quay.io
+      run: docker push quay.io/${{ inputs.quay_repository }}/${{ inputs.image_name }}:${{ inputs.nbs6_version }}
