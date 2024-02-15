@@ -28,6 +28,11 @@ on:
         required: true
         type: string
         default: latest
+      quay_repository:
+          description: "Quay Repository"
+          required: true
+          type: string
+          default: us-cdcgov/cdc-nbs-modernization
     secrets:
       NBS6_ZIP_S3_BUCKET_NAME:
         description: "Secret named NBS6_ZIP_S3_BUCKET_NAME providing S3 Bucket for NBS6 ZIP File."
@@ -82,8 +87,7 @@ jobs:
     - name: Build and Tag ${{ inputs.image_name }} Image
       id: build-image
       env:
-        QUAY_REGISTRY: ${{secrets.QUAY_ORGANIZATION}}
-        QUAY_REPOSITORY: ${{ secrets.QUAY_REPO_BASE_NAME }}/${{ inputs.image_name }}
+        QUAY_REPOSITORY: ${{ inputs.quay_repository }}/${{ inputs.image_name }}
         IMAGE_TAG: "${{ inputs.nbs6_version }}"
         DOCKERFILE_PATH: "${{ inputs.dockerfile_relative_path}}"
         USER_GUIDE_DOC_NAME: "${{ inputs.USER_GUIDE_DOC_NAME}}"
@@ -92,10 +96,11 @@ jobs:
       run: |
         # Build a docker container
         echo "Building image.."
-        Write-Output = "docker build --build-arg S3_ZIP_NAME=$full_s3_zip_name --build-arg USER_GUIDE_DOC_NAME='${env:USER_GUIDE_DOC_NAME}' --build-arg GITHUB_RELEASE_TAG='${env:GITHUB_RELEASE_TAG}' --build-arg GITHUB_ZIP_FILE_NAME='${env:$GITHUB_ZIP_FILE_NAME}' -t ${env:QUAY_REGISTRY}/${env:QUAY_REPOSITORY}:${env:IMAGE_TAG} ${env:DOCKERFILE_PATH}"
-
         $full_s3_zip_name = "wildfly-10.0.0.Final-$env:IMAGE_TAG"
-        $docker_build_command = "docker build --build-arg S3_ZIP_NAME=$full_s3_zip_name --build-arg USER_GUIDE_DOC_NAME='${env:USER_GUIDE_DOC_NAME}' --build-arg GITHUB_RELEASE_TAG='${env:GITHUB_RELEASE_TAG}' --build-arg GITHUB_ZIP_FILE_NAME='${env:$GITHUB_ZIP_FILE_NAME}' -t ${env:QUAY_REGISTRY}/${env:QUAY_REPOSITORY}:${env:IMAGE_TAG} ${env:DOCKERFILE_PATH}"
+
+        Write-Output = "docker build --build-arg S3_ZIP_NAME=$full_s3_zip_name --build-arg USER_GUIDE_DOC_NAME='${env:USER_GUIDE_DOC_NAME}' --build-arg GITHUB_RELEASE_TAG='${env:GITHUB_RELEASE_TAG}' --build-arg GITHUB_ZIP_FILE_NAME='${env:$GITHUB_ZIP_FILE_NAME}' -t ${env:QUAY_REPOSITORY}:${env:IMAGE_TAG} ${env:DOCKERFILE_PATH}"
+
+        $docker_build_command = "docker build --build-arg S3_ZIP_NAME=$full_s3_zip_name --build-arg USER_GUIDE_DOC_NAME='${env:USER_GUIDE_DOC_NAME}' --build-arg GITHUB_RELEASE_TAG='${env:GITHUB_RELEASE_TAG}' --build-arg GITHUB_ZIP_FILE_NAME='${env:$GITHUB_ZIP_FILE_NAME}' -t ${env:QUAY_REPOSITORY}:${env:IMAGE_TAG} ${env:DOCKERFILE_PATH}"
         Invoke-Expression $docker_build_command
 
 
@@ -105,10 +110,10 @@ jobs:
       with:
         image: ${{ inputs.image_name }}
         tags: ${{ inputs.nbs6_version }}
-        registry: quay.io/${{secrets.QUAY_ORGANIZATION}}/${{ secrets.QUAY_REPO_BASE_NAME }}
+        registry: quay.io/${{ inputs.quay_repository }}
         username: ${{ secrets.USERNAME_NAME }}
         password: ${{ secrets.REGISTRY_PASSWORD }}
 
 
-    - name: Print image url
+    - name: Image URL
       run: echo "Image pushed to ${{ steps.push-to-quay.outputs.registry-paths }}"
