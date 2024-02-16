@@ -1,0 +1,106 @@
+name: Build and store a microservice container
+on:
+  workflow_call:
+    inputs:
+      # container build inputs
+      image_name:
+        description: "Name of container in ECR."
+        required: true
+        type: string
+      dockerfile_relative_path:
+        description: "Relative path to dockerfile being built (use '-f' docker argument if the dockerfile referenced from the root directory)."
+        required: true
+        type: string
+      nbs6_version:
+        description: "NBS6 Version. This will be used to pull NBS ZIP from S3 Bucker in Shared Account and Tag Docker Image"
+        required: true
+        type: string
+      # User guide inputs
+      github_zip_file_name:
+          description: "Full zip file name and file format to be downloaded from latest Release Assets in Modernization Repository"
+          required: true
+          type: string
+      user_guide_doc_name:
+        description: "Full user guide name with file format to be configured in NBS6 container"
+        required: true
+        type: string
+      github_release_tag:
+        description: "Release tag from which zip file will be downloaded from. Default is always latest"
+        required: true
+        type: string
+        default: latest
+      # quay inputs
+      quay_repository:
+          description: "Quay Repository"
+          required: true
+          type: string
+          default: us-cdcgov/cdc-nbs-modernization
+    secrets:
+      NBS6_ZIP_S3_BUCKET_NAME:
+        description: "Secret named NBS6_ZIP_S3_BUCKET_NAME providing S3 Bucket for NBS6 ZIP File."
+        required: true
+      CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID:
+        description: "Secret named CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID where ECR resides."
+        required: true
+      QUAY_ROBOT_USERNAME:
+          description: "Quay Username"
+          required: true
+      QUAY_ROBOT_TOKEN:
+          description: "Quay Password"
+          required: true
+
+        
+jobs:
+  build:
+    name: Build and Push Container Docker Repository
+    runs-on: windows-2019
+    defaults:
+      run:
+        shell: pwsh
+
+    # These permissions are needed to interact with GitHub's OIDC Token endpoint.
+    permissions:
+      id-token: write
+      contents: read
+      security-events: write
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4.1.1
+
+    - name: Configure Environment Variables
+      run: |     
+        $github_repo_name = ($env:GITHUB_REPOSITORY -split '/')[1]
+        "github_repo_name=$github_repo_name" | Out-File -FilePath  $env:GITHUB_ENV -Encoding utf8 -Append
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4.0.2
+      with:
+        role-to-assume: "arn:aws:iam::${{secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID}}:role/cdc-github-${{env.github_repo_name}}-dev-role"
+        role-session-name: deploy-infrastructure
+        aws-region: us-east-1
+  
+    - name: Pull NBS6 ${{inputs.nbs6_version}} Zip File
+      run: |
+        $s3_pull_command = "aws s3 cp s3://${{secrets.NBS6_ZIP_S3_BUCKET_NAME}}/nbs/wildfly-10.0.0.Final-${{inputs.nbs6_version}}.zip ${{inputs.dockerfile_relative_path}}"
+        Invoke-Expression $s3_pull_command
+
+
+    - name: Build and Tag ${{inputs.image_name}} Image
+      env:
+        IMAGE_TAG: "${{inputs.nbs6_version}}"
+      run: |
+        # Build a docker container
+        echo "Building image.."
+        $full_s3_zip_name = "wildfly-10.0.0.Final-$env:IMAGE_TAG"
+
+        Write-Output = "docker build --build-arg S3_ZIP_NAME=$full_s3_zip_name --build-arg USER_GUIDE_DOC_NAME='${{inputs.USER_GUIDE_DOC_NAME}}' --build-arg GITHUB_RELEASE_TAG='${{inputs.github_release_tag}}' --build-arg GITHUB_ZIP_FILE_NAME='${{inputs.github_zip_file_name}}' -t ${{inputs.quay_repository}}/${{inputs.image_name}}:${{inputs.nbs6_version}} ${{inputs.dockerfile_relative_path}}"
+
+        $docker_build_command = "docker build --build-arg S3_ZIP_NAME=$full_s3_zip_name --build-arg USER_GUIDE_DOC_NAME='${{inputs.USER_GUIDE_DOC_NAME}}' --build-arg GITHUB_RELEASE_TAG='${{inputs.github_release_tag}}' --build-arg GITHUB_ZIP_FILE_NAME='${{inputs.github_zip_file_name}}' -t ${{inputs.quay_repository}}/${{inputs.image_name}}:${{inputs.nbs6_version}} ${{inputs.dockerfile_relative_path}}"
+        Invoke-Expression $docker_build_command
+
+    - name: Login to Quay.io with Robot Account
+      run: docker login -u=${{secrets.QUAY_ROBOT_USERNAME}} -p=${{secrets.QUAY_ROBOT_TOKEN}} quay.io
+
+    - name: Push Image to Quay.io
+      run: docker push ${{inputs.quay_repository}}/${{inputs.image_name}}:${{inputs.nbs6_version}}
