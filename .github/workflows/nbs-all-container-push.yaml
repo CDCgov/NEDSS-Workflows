@@ -1,5 +1,6 @@
 name: Moving All NBS7 Docker images from ECR to Quay.io
 
+on:
 # workflow_dispatch:
 #     inputs:
 #       nifi-publish-new-container: 
