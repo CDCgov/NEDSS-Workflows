@@ -1,189 +1,189 @@
 name: Moving All NBS7 Docker images from ECR to Quay.io
 
-workflow_dispatch:
-    inputs:
-      nifi-publish-new-container: 
-        description: Publish New NiFi container?
-        type: boolean        
-        default: false
-        required: true
-      nifi-ecr-tag: 
-        description: NiFi tag from AWS private ECR (image that is uploaded to quay.io).
-        type: string        
-        required: false
-      nifi-quay-tag: 
-        description: NiFi release tag for public quay.io.
-        type: string        
-        required: false
-      elasticsearch-publish-new-container: 
-        description: Publish New lasticSearch container?
-        type: boolean        
-        default: false
-        required: true
-      elasticsearch-ecr-tag: 
-        description: ElasticSearch tag from AWS private ECR (image that is uploaded to quay.io).
-        type: string        
-        required: false
-      elasticsearch-quay-tag: 
-        description: ElasticSearch release tag for public quay.io.
-        type: string        
-        required: false
-      mapi-publish-new-container: 
-        description: Publish New Modernization API container?
-        type: boolean        
-        default: false
-        required: true
-      mapi-ecr-tag: 
-        description: Modernization API tag from AWS private ECR (image that is uploaded to quay.io).
-        type: string        
-        required: false
-      mapi-quay-tag: 
-        description: Modernization API release tag for public quay.io.
-        type: string        
-        required: false
-      pbapi-publish-new-container: 
-        description: Publish New Page Builder API container?
-        type: boolean        
-        default: false
-        required: true
-      pbapi-ecr-tag: 
-        description: Page Builder API tag from AWS private ECR (image that is uploaded to quay.io).
-        type: string        
-        required: false
-      pbapi-quay-tag: 
-        description: Page Builder API release tag for public quay.io.
-        type: string        
-        required: false
-      ngateway-publish-new-container: 
-        description: Publish New NBS Gateway container?
-        type: boolean        
-        default: false
-        required: true
-      ngateway-ecr-tag: 
-        description: NBS Gateway tag from AWS private ECR (image that is uploaded to quay.io).
-        type: string        
-        required: false
-      ngateway-quay-tag: 
-        description: NBS Gateway release tag for public quay.io.
-        type: string        
-        required: false
-      diservice-publish-new-container: 
-        description: Publish New DI Service container?
-        type: boolean        
-        default: false
-        required: true
-      diservice-ecr-tag: 
-        description: DI Service tag from AWS private ECR (image that is uploaded to quay.io).
-        type: string        
-        required: false
-      diservice-quay-tag: 
-        description: DI Service release tag for public quay.io.
-        type: string        
-        required: false
-      nnd-data-publish-new-container: 
-        description: Publish New nnd-data-exchange-service container?
-        type: boolean        
-        default: false
-        required: true
-      nnd-data-ecr-tag: 
-        description: nnd-data-exchange-service tag from AWS private ECR (image that is uploaded to quay.io).
-        type: string        
-        required: false
-      nnd-data-quay-tag: 
-        description: nnd-data-exchange-service release tag for public quay.io.
-        type: string        
-        required: false
-      investigation-reporting-publish-new-container: 
-        description: Publish New investigation-reporting-service container?
-        type: boolean        
-        default: false
-        required: true
-     investigation-reporting-ecr-tag: 
-        description: investigation-reporting-service tag from AWS private ECR (image that is uploaded to quay.io).
-        type: string        
-        required: false
-      investigation-reporting-quay-tag: 
-        description: investigation-reporting-service release tag for public quay.io.
-        type: string        
-        required: false
-      ldfdata-publish-new-container: 
-        description: Publish New ldfdata-reporting-service container?
-        type: boolean        
-        default: false
-        required: true
-      ldfdata-data-ecr-tag: 
-        description: ldfdata-reporting-service tag from AWS private ECR (image that is uploaded to quay.io).
-        type: string        
-        required: false
-      ldfdata-data-quay-tag: 
-        description: ldfdata-reporting-service release tag for public quay.io.
-        type: string        
-        required: false
-      observation-reporting-publish-new-container: 
-        description: Publish New observation-reporting-service container?
-        type: boolean        
-        default: false
-        required: true
-      observation-reporting-ecr-tag: 
-        description: observation-reporting-service tag from AWS private ECR (image that is uploaded to quay.io).
-        type: string        
-        required: false
-      observation-reporting-quay-tag: 
-        description: observation-reporting-service release tag for public quay.io.
-        type: string        
-        required: false
-      organization-reporting-publish-new-container: 
-        description: Publish New organization-reporting-service container?
-        type: boolean        
-        default: false
-        required: true
-      organization-reporting-ecr-tag: 
-        description: organization-reporting-service tag from AWS private ECR (image that is uploaded to quay.io).
-        type: string        
-        required: false
-      organization-reporting-quay-tag: 
-        description: organization-reporting-service release tag for public quay.io.
-        type: string        
-        required: false
-      person-reporting-publish-new-container: 
-        description: Publish New person-reporting-service container?
-        type: boolean        
-        default: false
-        required: true
-      person-reporting-ecr-tag: 
-        description: person-reporting-service tag from AWS private ECR (image that is uploaded to quay.io).
-        type: string        
-        required: false
-      person-reporting-quay-tag: 
-        description: person-reporting-service release tag for public quay.io.
-        type: string        
-        required: false
-      post-processing-publish-new-container: 
-        description: Publish New post-processing-reporting-service container?
-        type: boolean        
-        default: false
-        required: true
-      post-processing-ecr-tag: 
-        description: post-processing-reporting-service tag from AWS private ECR (image that is uploaded to quay.io).
-        type: string        
-        required: false
-      post-processing-quay-tag: 
-        description: post-processing-reporting-service release tag for public quay.io.
-        type: string        
-        required: false
-      liquibase-publish-new-container: 
-        description: Publish New liquibase container?
-        type: boolean        
-        default: false
-        required: true
-      liquibase-ecr-tag: 
-        description: liquibase tag from AWS private ECR (image that is uploaded to quay.io).
-        type: string        
-        required: false
-      liquibase-quay-tag: 
-        description: liquibase-reporting-service release tag for public quay.io.
-        type: string        
-        required: false
+# workflow_dispatch:
+#     inputs:
+#       nifi-publish-new-container: 
+#         description: Publish New NiFi container?
+#         type: boolean        
+#         default: false
+#         required: true
+#       nifi-ecr-tag: 
+#         description: NiFi tag from AWS private ECR (image that is uploaded to quay.io).
+#         type: string        
+#         required: false
+#       nifi-quay-tag: 
+#         description: NiFi release tag for public quay.io.
+#         type: string        
+#         required: false
+#       elasticsearch-publish-new-container: 
+#         description: Publish New lasticSearch container?
+#         type: boolean        
+#         default: false
+#         required: true
+#       elasticsearch-ecr-tag: 
+#         description: ElasticSearch tag from AWS private ECR (image that is uploaded to quay.io).
+#         type: string        
+#         required: false
+#       elasticsearch-quay-tag: 
+#         description: ElasticSearch release tag for public quay.io.
+#         type: string        
+#         required: false
+#       mapi-publish-new-container: 
+#         description: Publish New Modernization API container?
+#         type: boolean        
+#         default: false
+#         required: true
+#       mapi-ecr-tag: 
+#         description: Modernization API tag from AWS private ECR (image that is uploaded to quay.io).
+#         type: string        
+#         required: false
+#       mapi-quay-tag: 
+#         description: Modernization API release tag for public quay.io.
+#         type: string        
+#         required: false
+#       pbapi-publish-new-container: 
+#         description: Publish New Page Builder API container?
+#         type: boolean        
+#         default: false
+#         required: true
+#       pbapi-ecr-tag: 
+#         description: Page Builder API tag from AWS private ECR (image that is uploaded to quay.io).
+#         type: string        
+#         required: false
+#       pbapi-quay-tag: 
+#         description: Page Builder API release tag for public quay.io.
+#         type: string        
+#         required: false
+#       ngateway-publish-new-container: 
+#         description: Publish New NBS Gateway container?
+#         type: boolean        
+#         default: false
+#         required: true
+#       ngateway-ecr-tag: 
+#         description: NBS Gateway tag from AWS private ECR (image that is uploaded to quay.io).
+#         type: string        
+#         required: false
+#       ngateway-quay-tag: 
+#         description: NBS Gateway release tag for public quay.io.
+#         type: string        
+#         required: false
+#       diservice-publish-new-container: 
+#         description: Publish New DI Service container?
+#         type: boolean        
+#         default: false
+#         required: true
+#       diservice-ecr-tag: 
+#         description: DI Service tag from AWS private ECR (image that is uploaded to quay.io).
+#         type: string        
+#         required: false
+#       diservice-quay-tag: 
+#         description: DI Service release tag for public quay.io.
+#         type: string        
+#         required: false
+#       nnd-data-publish-new-container: 
+#         description: Publish New nnd-data-exchange-service container?
+#         type: boolean        
+#         default: false
+#         required: true
+#       nnd-data-ecr-tag: 
+#         description: nnd-data-exchange-service tag from AWS private ECR (image that is uploaded to quay.io).
+#         type: string        
+#         required: false
+#       nnd-data-quay-tag: 
+#         description: nnd-data-exchange-service release tag for public quay.io.
+#         type: string        
+#         required: false
+#       investigation-reporting-publish-new-container: 
+#         description: Publish New investigation-reporting-service container?
+#         type: boolean        
+#         default: false
+#         required: true
+#      investigation-reporting-ecr-tag: 
+#         description: investigation-reporting-service tag from AWS private ECR (image that is uploaded to quay.io).
+#         type: string        
+#         required: false
+#       investigation-reporting-quay-tag: 
+#         description: investigation-reporting-service release tag for public quay.io.
+#         type: string        
+#         required: false
+#       ldfdata-publish-new-container: 
+#         description: Publish New ldfdata-reporting-service container?
+#         type: boolean        
+#         default: false
+#         required: true
+#       ldfdata-data-ecr-tag: 
+#         description: ldfdata-reporting-service tag from AWS private ECR (image that is uploaded to quay.io).
+#         type: string        
+#         required: false
+#       ldfdata-data-quay-tag: 
+#         description: ldfdata-reporting-service release tag for public quay.io.
+#         type: string        
+#         required: false
+#       observation-reporting-publish-new-container: 
+#         description: Publish New observation-reporting-service container?
+#         type: boolean        
+#         default: false
+#         required: true
+#       observation-reporting-ecr-tag: 
+#         description: observation-reporting-service tag from AWS private ECR (image that is uploaded to quay.io).
+#         type: string        
+#         required: false
+#       observation-reporting-quay-tag: 
+#         description: observation-reporting-service release tag for public quay.io.
+#         type: string        
+#         required: false
+#       organization-reporting-publish-new-container: 
+#         description: Publish New organization-reporting-service container?
+#         type: boolean        
+#         default: false
+#         required: true
+#       organization-reporting-ecr-tag: 
+#         description: organization-reporting-service tag from AWS private ECR (image that is uploaded to quay.io).
+#         type: string        
+#         required: false
+#       organization-reporting-quay-tag: 
+#         description: organization-reporting-service release tag for public quay.io.
+#         type: string        
+#         required: false
+#       person-reporting-publish-new-container: 
+#         description: Publish New person-reporting-service container?
+#         type: boolean        
+#         default: false
+#         required: true
+#       person-reporting-ecr-tag: 
+#         description: person-reporting-service tag from AWS private ECR (image that is uploaded to quay.io).
+#         type: string        
+#         required: false
+#       person-reporting-quay-tag: 
+#         description: person-reporting-service release tag for public quay.io.
+#         type: string        
+#         required: false
+#       post-processing-publish-new-container: 
+#         description: Publish New post-processing-reporting-service container?
+#         type: boolean        
+#         default: false
+#         required: true
+#       post-processing-ecr-tag: 
+#         description: post-processing-reporting-service tag from AWS private ECR (image that is uploaded to quay.io).
+#         type: string        
+#         required: false
+#       post-processing-quay-tag: 
+#         description: post-processing-reporting-service release tag for public quay.io.
+#         type: string        
+#         required: false
+#       liquibase-publish-new-container: 
+#         description: Publish New liquibase container?
+#         type: boolean        
+#         default: false
+#         required: true
+#       liquibase-ecr-tag: 
+#         description: liquibase tag from AWS private ECR (image that is uploaded to quay.io).
+#         type: string        
+#         required: false
+#       liquibase-quay-tag: 
+#         description: liquibase-reporting-service release tag for public quay.io.
+#         type: string        
+#         required: false
 
 jobs:
   publish-nifi:
