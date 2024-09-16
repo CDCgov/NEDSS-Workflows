@@ -7,15 +7,37 @@ on:
     inputs:
       ecr-image-repo:
         description: 'ECR image repo name to pull'
+        type: string
         required: true 
       ecr-image-tag:
         description: 'ECR image tag to pull'
+        type: string
         required: true
       quay-image-repo:
         description: 'Quay.io image repo name'
+        type: string
         required: true
       quay-image-tag:
         description: 'Quay.io image tag (could be same as in ECR)'
+        type: string
+        required: true
+  workflow_call:
+    inputs:
+      ecr-image-repo:
+        description: 'ECR image repo name to pull'
+        type: string
+        required: true 
+      ecr-image-tag:
+        description: 'ECR image tag to pull'
+        type: string
+        required: true
+      quay-image-repo:
+        description: 'Quay.io image repo name'
+        type: string
+        required: true
+      quay-image-tag:
+        description: 'Quay.io image tag (could be same as in ECR)'
+        type: string
         required: true
   workflow_call:
     inputs:
