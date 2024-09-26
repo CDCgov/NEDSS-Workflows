@@ -1,5 +1,4 @@
 ### Pulls docker images from private ECR and publishes them to public Quay.io
-
 name: Moving Docker images from ECR to Quay.io
 
 on:
@@ -39,21 +38,7 @@ on:
         description: 'Quay.io image tag (could be same as in ECR)'
         type: string
         required: true
-  workflow_call:
-    inputs:
-      ecr-image-repo:
-        description: 'ECR image repo name to pull'
-        required: true 
-      ecr-image-tag:
-        description: 'ECR image tag to pull'
-        required: true
-      quay-image-repo:
-        description: 'Quay.io image repo name'
-        required: true
-      quay-image-tag:
-        description: 'Quay.io image tag (could be same as in ECR)'
-        required: true
-
+  
 permissions:
   id-token: write
   contents: read
