@@ -5,51 +5,41 @@ inputs:
   container-ref:
     description: 'Locally built container id which Trivy should scan'
     required: true
-    type: string
   severity:
     description: 'Severities of vulnerabilities to be scanned for and displayed (UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL)'
     required: false  
     default: 'CRITICAL,HIGH'
-    type: string
   limit-severities-for-sarif:
     description: 'By default SARIF format enforces output of all vulnerabilities regardless of configured severities. To override this behavior set this parameter to true'
     required: false  
-    default: true
-    type: boolean 
+    default: 'true' 
   upload-to-github-security-tab:
     description: 'Upload results to GitHub security tab?'
     required: false
-    default: false
-    type: boolean
+    default: 'false'
   ignore-unfixed:
     description: 'Ignore unpatched/unfixed vulnerabilities'
     required: false
-    default: false
-    type: boolean 
+    default: 'false'
   skip-dirs:
     description: 'Comma separated list of directories where traversal is skipped'
     required: false 
     default: ''
-    type: string
   skip-files:
     description: 'Comma separated list of files where traversal is skipped'
     required: false  
     default: ''
-    type: string
   timeout:
     description: 'Scan timeout duration'
     required: false  
     default: '10m0s'
-    type: string
   exit-code:
     description: 'Exit code when specified vulnerabilities are found (0).'
     required: false  
     default: '0'
-    type: string
   trivyignores:
     description: 'Comma-separated list of relative paths in repository to one or more .trivyignore files, for usage see https://aquasecurity.github.io/trivy/v0.19.2/vulnerability/examples/filter/'
-    required: false         
-    type: string
+    required: false 
 
 runs:
   using: composite

@@ -52,7 +52,6 @@ on:
         required: false         
         type: string
   
-
 jobs:
   build:
     name: Scan container with Trivy
