@@ -56,7 +56,7 @@ runs:
   steps:
     - name: Run Trivy vulnerability scanner
       if: ${{ inputs.upload-to-github-security-tab != 'true' }}
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@0.25.0
       with:
         image-ref: '${{ inputs.container-ref }}'
         format: 'table'        
@@ -70,7 +70,7 @@ runs:
     # Runs scanner for printing to GitHub Security Tab
     - name: Run Trivy vulnerability scanner for printing to GitHub Security Tab
       if: ${{ inputs.upload-to-github-security-tab == 'true' }}
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@0.25.0
       with:
         image-ref: '${{ inputs.container-ref }}'
         format: 'sarif'
