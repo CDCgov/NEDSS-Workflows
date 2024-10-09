@@ -52,7 +52,6 @@ on:
         required: false         
         type: string
   
-
 jobs:
   build:
     name: Scan container with Trivy
@@ -61,7 +60,7 @@ jobs:
     steps:
       # Runs scanner for neat printing in GitHub Actions runner
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Build and tag ${{ inputs.microservice_name }} image 
       id: build-image
