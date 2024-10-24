@@ -73,12 +73,7 @@ on:
       trivyignores:
         description: 'Comma-separated list of relative paths in repository to one or more .trivyignore files, for usage see https://aquasecurity.github.io/trivy/v0.19.2/vulnerability/examples/filter/'
         required: false         
-        type: string
-      continue-on-trivy-scan-error:
-        description: Continue in the case trivy scans fail
-        required: false
-        default: true
-        type: boolean       
+        type: string     
     secrets:
       CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID:
         description: "Secret named CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID where ECR resides."
@@ -195,7 +190,6 @@ jobs:
         echo "CONTAINER_TAG=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV        
 
     - name: Scan container image
-      continue-on-error: ${{ inputs.continue-on-trivy-scan-error }}
       uses: CDCgov/NEDSS-Workflows/.github/actions/trivy-scanner@main
       if: '${{inputs.build-new-container == true}}'
       with:
@@ -211,7 +205,7 @@ jobs:
 
     - name: Push ${{ inputs.microservice_name }} image to Amazon ECR
       id: push-image
-      if: '${{inputs.build-new-container == true}}'
+      if: '${{inputs.build-new-container == true && !cancelled() }}'
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: ${{ secrets.ECR_REPO_BASE_NAME }}/${{ inputs.microservice_name }}
