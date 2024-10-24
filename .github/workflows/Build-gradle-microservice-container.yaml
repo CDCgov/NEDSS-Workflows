@@ -173,6 +173,7 @@ jobs:
         limit-severities-for-sarif: ${{inputs.limit-severities-for-sarif}}
 
     - name: Push ${{ inputs.microservice_name }} image to Amazon ECR
+      continue-on-error: ${{ inputs.continue-on-trivy-scan-error }}
       id: push-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
