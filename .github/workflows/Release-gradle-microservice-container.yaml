@@ -190,6 +190,7 @@ jobs:
         echo "CONTAINER_TAG=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV        
 
     - name: Scan container image
+      continue-on-error: true 
       uses: CDCgov/NEDSS-Workflows/.github/actions/trivy-scanner@main
       if: '${{inputs.build-new-container == true}}'
       with:

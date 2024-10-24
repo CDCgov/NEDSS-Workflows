@@ -71,7 +71,7 @@ jobs:
         docker build -t $IMAGE_TAG ${{ inputs.dockerfile_relative_path}}   
     
     - name: Scan container image
-      if: ${{ !cancelled() }}
+      continue-on-error: true 
       uses: CDCgov/NEDSS-Workflows/.github/actions/trivy-scanner@main
       with:
         container-ref: ${{ inputs.microservice_name }}

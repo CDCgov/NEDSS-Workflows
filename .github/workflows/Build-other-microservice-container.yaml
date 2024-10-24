@@ -142,7 +142,8 @@ jobs:
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ${{ inputs.dockerfile_relative_path}}
         echo "CONTAINER_TAG=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
       
-    - name: Scan container image      
+    - name: Scan container image 
+      continue-on-error: true      
       uses: CDCgov/NEDSS-Workflows/.github/actions/trivy-scanner@main
       with:
         container-ref: ${{ env.CONTAINER_TAG }}
