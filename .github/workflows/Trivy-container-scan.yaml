@@ -51,6 +51,11 @@ on:
         description: 'Comma-separated list of relative paths in repository to one or more .trivyignore files, for usage see https://aquasecurity.github.io/trivy/v0.19.2/vulnerability/examples/filter/'
         required: false         
         type: string
+      continue-on-trivy-scan-error:
+        description: Continue in the case trivy scans fail
+        required: false
+        default: true
+        type: boolean 
   
 jobs:
   build:
@@ -71,6 +76,7 @@ jobs:
         docker build -t $IMAGE_TAG ${{ inputs.dockerfile_relative_path}}   
     
     - name: Scan container image
+      continue-on-error: ${{ inputs.continue-on-trivy-scan-error }}
       uses: CDCgov/NEDSS-Workflows/.github/actions/trivy-scanner@main
       with:
         container-ref: ${{ inputs.microservice_name }}
