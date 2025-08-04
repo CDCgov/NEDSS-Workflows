@@ -53,16 +53,24 @@ jobs:
         sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
         sudo chmod +x /usr/bin/yq     
 
-    - name: Update image tag (consolidated or flat structure)
+    - name: Update image tag (looping or flat structure)
       run: |
-        # Check if it's a consolidated chart (services.<svc>.image.tag exists)
-        if yq e ".services.\"${{ inputs.microservice_name }}\".image.tag" "${{ inputs.values_file_with_path }}" >/dev/null 2>&1; then
-          echo "Detected consolidated Helm chart structure"
-          yq e ".services.\"${{ inputs.microservice_name }}\".image.tag = \"${{ inputs.new_image_tag }}\"" -i "${{ inputs.values_file_with_path }}"
+        if yq e '.services' "${{ inputs.values_file_with_path }}" >/dev/null 2>&1; then
+          echo "Detected consolidated (looping) Helm chart structure"
+
+          # Get all service names
+          service_names=$(yq e '.services | keys | .[]' "${{ inputs.values_file_with_path }}")
+
+          for svc in $service_names; do
+            echo "Updating image tag for service: $svc"
+            yq e ".services.\"${svc}\".image.tag = \"${{ inputs.new_image_tag }}\"" -i "${{ inputs.values_file_with_path }}"
+          done
+
         else
           echo "Detected flat Helm chart structure"
           yq e ".image.tag = \"${{ inputs.new_image_tag }}\"" -i "${{ inputs.values_file_with_path }}"
         fi
+
 
     # If request is coming from the main trunk or is intended for dev environment
     - name: Commit and push changes to helm repository directly to main
