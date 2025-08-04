@@ -43,7 +43,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: CDCgov/NEDSS-Helm
-        token: ${{secrets.HELM_TOKEN}} 
+        token: ${{ secrets.HELM_TOKEN }} 
     
     - name: Set env variable
       run: echo "ran_push_to_main=false" >> $GITHUB_ENV
