@@ -9,8 +9,8 @@ jobs:
     uses: ./.github/workflows/Update-helm-charts.yaml
     with:
       values_file_with_path: "charts/rtr/values-dummy.yaml"
-      new_image_tag: "1.0.1-SNAPSHOT.f56b687"
-      microservice_name: "organization-reporting"
+      new_image_tag: "1.0.1-SNAPSHOT.ea4914e"
+      microservice_name: "investigation-reporting-service"
     secrets:
       GIT_USER_EMAIL: ${{ secrets.GIT_USER_EMAIL }}
       GIT_USER_NAME: ${{ secrets.GIT_USER_NAME }}
