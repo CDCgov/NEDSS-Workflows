@@ -46,31 +46,12 @@ jobs:
         token: ${{secrets.HELM_TOKEN}} 
     
     - name: Set env variable
-      run: echo "ran_push_to_main=false" >> $GITHUB_ENV
+      run: echo "ran_push_to_main=false" >> $GITHUB_ENV     
 
-    - name: Install yq
+    - name: Modify helm chart image
       run: |
-        sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
-        sudo chmod +x /usr/bin/yq     
-
-    - name: Update image tag (looping or flat structure)
-      run: |
-        if yq e '.services' "${{ inputs.values_file_with_path }}" >/dev/null 2>&1; then
-          echo "Detected consolidated (looping) Helm chart structure"
-
-          # Get all service names
-          service_names=$(yq e '.services | keys | .[]' "${{ inputs.values_file_with_path }}")
-
-          for svc in $service_names; do
-            echo "Updating image tag for service: $svc"
-            yq e ".services.\"${svc}\".image.tag = \"${{ inputs.new_image_tag }}\"" -i "${{ inputs.values_file_with_path }}"
-          done
-
-        else
-          echo "Detected flat Helm chart structure"
-          yq e ".image.tag = \"${{ inputs.new_image_tag }}\"" -i "${{ inputs.values_file_with_path }}"
-        fi
-
+        awk -v NEW_TAG="${{ inputs.new_image_tag}}" '/^ *image:/ {p=1} p && /^ *tag:/ {sub(/:.*/, ": "NEW_TAG); p=0} {print}' ${{ inputs.values_file_with_path}} > newfile.yaml
+        mv newfile.yaml ${{ inputs.values_file_with_path}}
 
     # If request is coming from the main trunk or is intended for dev environment
     - name: Commit and push changes to helm repository directly to main
