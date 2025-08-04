@@ -53,22 +53,21 @@ jobs:
         sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
         sudo chmod +x /usr/bin/yq     
 
-    - name: Update image tag (looping or flat structure)
+    - name: Update image tag for single service
       run: |
-        if yq e '.services' "${{ inputs.values_file_with_path }}" >/dev/null 2>&1; then
-          echo "Detected consolidated (looping) Helm chart structure"
+        values_file="${{ inputs.values_file_with_path }}"
+        svc_name="${{ inputs.microservice_name }}"
+        new_tag="${{ inputs.new_image_tag }}"
 
-          # Get all service names
-          service_names=$(yq e '.services | keys | .[]' "${{ inputs.values_file_with_path }}")
-
-          for svc in $service_names; do
-            echo "Updating image tag for service: $svc"
-            yq e ".services.\"${svc}\".image.tag = \"${{ inputs.new_image_tag }}\"" -i "${{ inputs.values_file_with_path }}"
-          done
-
+        if yq e ".services.\"$svc_name\"" "$values_file" >/dev/null 2>&1; then
+          echo "Detected service '$svc_name' in consolidated structure"
+          yq e ".services.\"$svc_name\".image.tag = \"$new_tag\"" -i "$values_file"
+        elif yq e '.image.tag' "$values_file" >/dev/null 2>&1; then
+          echo "Detected flat structure"
+          yq e ".image.tag = \"$new_tag\"" -i "$values_file"
         else
-          echo "Detected flat Helm chart structure"
-          yq e ".image.tag = \"${{ inputs.new_image_tag }}\"" -i "${{ inputs.values_file_with_path }}"
+          echo "Service '$svc_name' not found and no flat image.tag structure detected."
+          exit 1
         fi
 
 
