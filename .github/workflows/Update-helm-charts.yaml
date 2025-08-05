@@ -43,33 +43,15 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: CDCgov/NEDSS-Helm
-        token: ${{ secrets.HELM_TOKEN }} 
+        token: ${{secrets.HELM_TOKEN}} 
     
     - name: Set env variable
-      run: echo "ran_push_to_main=false" >> $GITHUB_ENV
+      run: echo "ran_push_to_main=false" >> $GITHUB_ENV     
 
-    - name: Install yq
+    - name: Modify helm chart image
       run: |
-        sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
-        sudo chmod +x /usr/bin/yq     
-
-    - name: Update image tag for single service
-      run: |
-        values_file="${{ inputs.values_file_with_path }}"
-        svc_name="${{ inputs.microservice_name }}"
-        new_tag="${{ inputs.new_image_tag }}"
-
-        if yq e ".services.\"$svc_name\"" "$values_file" >/dev/null 2>&1; then
-          echo "Detected service '$svc_name' in consolidated structure"
-          yq e ".services.\"$svc_name\".image.tag = \"$new_tag\"" -i "$values_file"
-        elif yq e '.image.tag' "$values_file" >/dev/null 2>&1; then
-          echo "Detected flat structure"
-          yq e ".image.tag = \"$new_tag\"" -i "$values_file"
-        else
-          echo "Service '$svc_name' not found and no flat image.tag structure detected."
-          exit 1
-        fi
-
+        awk -v NEW_TAG="${{ inputs.new_image_tag}}" '/^ *image:/ {p=1} p && /^ *tag:/ {sub(/:.*/, ": "NEW_TAG); p=0} {print}' ${{ inputs.values_file_with_path}} > newfile.yaml
+        mv newfile.yaml ${{ inputs.values_file_with_path}}
 
     # If request is coming from the main trunk or is intended for dev environment
     - name: Commit and push changes to helm repository directly to main
