@@ -48,10 +48,28 @@ jobs:
     - name: Set env variable
       run: echo "ran_push_to_main=false" >> $GITHUB_ENV     
 
-    - name: Modify helm chart image
+    - name: Install yq
       run: |
-        awk -v NEW_TAG="${{ inputs.new_image_tag}}" '/^ *image:/ {p=1} p && /^ *tag:/ {sub(/:.*/, ": "NEW_TAG); p=0} {print}' ${{ inputs.values_file_with_path}} > newfile.yaml
-        mv newfile.yaml ${{ inputs.values_file_with_path}}
+        sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+        sudo chmod +x /usr/bin/yq
+
+    - name: Update image tag for consolidated or flat chart
+      run: |
+        values_file="${{ inputs.values_file_with_path }}"
+        svc_name="${{ inputs.microservice_name }}"
+        new_tag="${{ inputs.new_image_tag }}"
+
+        if [ -n "$svc_name" ] && [ "$(yq e ".services.\"$svc_name\"" "$values_file")" != "null" ]; then
+          echo "Detected consolidated chart: updating service '$svc_name' to tag '$new_tag'"
+          yq e ".services.\"$svc_name\".image.tag |= \"$new_tag\"" -i "$values_file"
+        elif [ "$(yq e '.image.tag' "$values_file")" != "null" ]; then
+          echo "Detected flat chart: updating .image.tag to '$new_tag'"
+          yq e ".image.tag |= \"$new_tag\"" -i "$values_file"
+        else
+          echo "Neither consolidated service '$svc_name' nor flat .image.tag found in $values_file"
+          exit 1
+        fi
+
 
     # If request is coming from the main trunk or is intended for dev environment
     - name: Commit and push changes to helm repository directly to main
