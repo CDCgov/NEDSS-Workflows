@@ -9,7 +9,7 @@ jobs:
     with:
       values_file_with_path: "charts/rtr/values-dummy.yaml"
       new_image_tag: "1.0.1-SNAPSHOT.2d80af1"
-      microservice_name: "investigation-reporting"
+      microservice_name: "investigation-reporting-service"
     secrets:
       GIT_USER_EMAIL: ${{ secrets.GIT_USER_EMAIL }}
       GIT_USER_NAME: ${{ secrets.GIT_USER_NAME }}
