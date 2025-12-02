@@ -59,14 +59,89 @@ jobs:
         svc_name="${{ inputs.microservice_name }}"
         new_tag="${{ inputs.new_image_tag }}"
 
-        if [ -n "$svc_name" ] && [ "$(yq e ".services.\"$svc_name\"" "$values_file")" != "null" ]; then
-          echo "Detected consolidated chart: updating service '$svc_name' to tag '$new_tag'"
-          yq e ".services.\"$svc_name\".image.tag |= \"$new_tag\"" -i "$values_file"
-        elif [ "$(yq e '.image.tag' "$values_file")" != "null" ]; then
-          echo "Detected flat chart: updating .image.tag to '$new_tag'"
+        echo "========================================"
+        echo "Helm Chart Update"
+        echo "========================================"
+        echo "Values file: $values_file"
+        echo "Service name: $svc_name"
+        echo "New tag: $new_tag"
+        echo ""
+        
+        # Check if values file exists
+        if [ ! -f "$values_file" ]; then
+          echo "ERROR: Values file not found: $values_file"
+          exit 1
+        fi
+        
+        updated=false
+        
+        # For consolidated charts, try multiple service name variations
+        if [ -n "$svc_name" ]; then
+          # Prepare service name variations
+          svc_name_exact="$svc_name"
+          svc_name_no_suffix="${svc_name%-service}"  # Remove -service suffix if present
+          
+          echo "Attempting consolidated chart update..."
+          echo "  Trying service key: '$svc_name_exact'"
+          
+          # Try exact name first
+          if [ "$(yq e ".services.\"$svc_name_exact\".image.tag" "$values_file")" != "null" ]; then
+            current_tag=$(yq e ".services.\"$svc_name_exact\".image.tag" "$values_file")
+            echo "  ✓ Found service '$svc_name_exact'"
+            echo "    Current tag: $current_tag"
+            echo "    Updating to: $new_tag"
+            yq e ".services.\"$svc_name_exact\".image.tag |= \"$new_tag\"" -i "$values_file"
+            updated=true
+          
+          # If exact name didn't work and we have a -service suffix, try without it
+          elif [ "$svc_name_exact" != "$svc_name_no_suffix" ]; then
+            echo "  Service key '$svc_name_exact' not found"
+            echo "  Trying service key: '$svc_name_no_suffix'"
+            
+            if [ "$(yq e ".services.\"$svc_name_no_suffix\".image.tag" "$values_file")" != "null" ]; then
+              current_tag=$(yq e ".services.\"$svc_name_no_suffix\".image.tag" "$values_file")
+              echo "  ✓ Found service '$svc_name_no_suffix'"
+              echo "    Current tag: $current_tag"
+              echo "    Updating to: $new_tag"
+              yq e ".services.\"$svc_name_no_suffix\".image.tag |= \"$new_tag\"" -i "$values_file"
+              updated=true
+            fi
+          fi
+        fi
+        
+        # If still not updated, try flat chart structure
+        if [ "$updated" = false ] && [ "$(yq e '.image.tag' "$values_file")" != "null" ]; then
+          current_tag=$(yq e ".image.tag" "$values_file")
+          echo "✓ Detected flat chart"
+          echo "  Current tag: $current_tag"
+          echo "  Updating to: $new_tag"
           yq e ".image.tag |= \"$new_tag\"" -i "$values_file"
+          updated=true
+        fi
+        
+        # Report results
+        if [ "$updated" = true ]; then
+          echo ""
+          echo "✓ Successfully updated image tag to: $new_tag"
         else
-          echo "Neither consolidated service '$svc_name' nor flat .image.tag found in $values_file"
+          echo ""
+          echo "✗ ERROR: Could not find image tag path in values file"
+          echo ""
+          echo "For consolidated charts, tried:"
+          if [ -n "$svc_name" ]; then
+            echo "  - .services.\"$svc_name\".image.tag"
+            if [ "$svc_name" != "$svc_name_no_suffix" ]; then
+              echo "  - .services.\"$svc_name_no_suffix\".image.tag"
+            fi
+          fi
+          echo "For flat charts, tried:"
+          echo "  - .image.tag"
+          echo ""
+          echo "Available services in values file:"
+          yq e '.services | keys' "$values_file" 2>/dev/null || echo "  (no .services block found)"
+          echo ""
+          echo "Does values file have .image.tag?"
+          yq e '.image.tag' "$values_file" 2>/dev/null || echo "  (no .image.tag found)"
           exit 1
         fi
 
