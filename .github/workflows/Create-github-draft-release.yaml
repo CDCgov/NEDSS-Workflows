@@ -109,7 +109,9 @@ jobs:
         # Delete excluded files from working directory
         for d in "${list_paths_to_remove[@]}"
         do
-          rm -r ./zipping_directory/$d
+          if [ -e "./zipping_directory/$d" ]; then
+            rm -r ./zipping_directory/$d
+          fi
         done
 
         # zip files and copy to correct location
