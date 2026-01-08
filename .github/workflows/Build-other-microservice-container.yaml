@@ -61,21 +61,9 @@ on:
         required: false         
         type: string   
     secrets:
-      CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID:
-        description: "Secret named CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID where ECR resides."
+      NBS_ACCOUNTID:
+        description: "Secret named NBS_ACCOUNTID where ECR resides."
         required: true
-      ECR_REPO_BASE_NAME:
-        description: "Secret named ECR_REPO_BASE_NAME describing the ECR base path name."
-        required: true
-      GIT_USER_EMAIL:
-        description: "Secret named GIT_USER_EMAIL for the CI user email."
-        required: false
-      GIT_USER_NAME:
-        description: "Secret named ECR_REPO_BASE_NAME for the CI user name."
-        required: false
-      HELM_TOKEN:
-        description: "Secret named HELM_TOKEN to access helm chart repository"
-        required: false
     outputs:
       output_image_tag:
         description: "Container image tag" 
@@ -122,9 +110,9 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        role-to-assume: "arn:aws:iam::${{ secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID }}:role/cdc-github-${{ env.github_repo_name }}-dev-role"
+        role-to-assume: "arn:aws:iam::${{ secrets.NBS_ACCOUNTID }}:role/github-actions-nbs-deployment-role"
         role-session-name: deploy-infrastructure
-        aws-region: us-east-1
+        aws-region: us-east-2
 
     - name: Login to Amazon ECR
       id: login-ecr
@@ -134,7 +122,7 @@ jobs:
       id: build-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ secrets.ECR_REPO_BASE_NAME }}/${{ inputs.microservice_name }}
+        ECR_REPOSITORY: ${{ inputs.microservice_name }}
         IMAGE_TAG: "${{ env.new_image_tag }}"
       run: |
         # Build a docker container
@@ -161,7 +149,7 @@ jobs:
       id: push-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ secrets.ECR_REPO_BASE_NAME }}/${{ inputs.microservice_name }}
+        ECR_REPOSITORY: ${{ inputs.microservice_name }}
         IMAGE_TAG: "${{ env.new_image_tag }}"
       run: |
         echo "Pushing image to ECR..."

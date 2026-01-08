@@ -69,15 +69,6 @@ on:
       NBS_ACCOUNTID:
         description: "Secret named NBS_ACCOUNTID where ECR resides."
         required: true
-      GIT_USER_EMAIL:
-        description: "Secret named GIT_USER_EMAIL for the CI user email."
-        required: false
-      GIT_USER_NAME:
-        description: "Secret named GIT_USER_NAME for the CI user name."
-        required: false
-      HELM_TOKEN:
-        description: "Secret named HELM_TOKEN to access helm chart repository"
-        required: false
     outputs:
       output_image_tag:
         description: "Container image tag" 
