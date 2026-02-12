@@ -64,7 +64,7 @@ jobs:
       with:
         role-to-assume: "arn:aws:iam::${{secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID}}:role/cdc-github-${{env.github_repo_name}}-dev-role"
         role-session-name: deploy-infrastructure
-        aws-region: us-east-1
+        aws-region: us-east-2
   
     - name: Pull NBS6 ${{inputs.nbs6_version}} Zip File
       run: |
