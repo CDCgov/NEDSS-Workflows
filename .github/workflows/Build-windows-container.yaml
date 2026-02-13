@@ -62,7 +62,7 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4.0.2
       with:
-        role-to-assume: "arn:aws:iam::${{secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID}}:role/cdc-github-${{env.github_repo_name}}-dev-role"
+        role-to-assume: "arn:aws:iam::${{secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID}}:role/github-actions-nbs-deployment-role"
         role-session-name: deploy-infrastructure
         aws-region: us-east-2
   
