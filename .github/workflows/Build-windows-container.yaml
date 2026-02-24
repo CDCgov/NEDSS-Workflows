@@ -39,7 +39,7 @@ on:
 jobs:
   build:
     name: Build and Push Container Docker Repository
-    runs-on: windows-2025
+    runs-on: windows-2022
     defaults:
       run:
         shell: pwsh
