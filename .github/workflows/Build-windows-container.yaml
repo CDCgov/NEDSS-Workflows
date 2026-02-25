@@ -54,6 +54,9 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4.1.1
 
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
     - name: Configure Environment Variables
       run: |     
         $github_repo_name = ($env:GITHUB_REPOSITORY -split '/')[1]
