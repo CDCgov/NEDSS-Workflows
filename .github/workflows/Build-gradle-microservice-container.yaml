@@ -143,7 +143,7 @@ jobs:
 
     - name: Scan container image
       continue-on-error: false      
-      uses: CDCgov/NEDSS-Workflows/.github/actions/trivy-scanner@main
+      uses: CDCgov/NEDSS-Workflows/.github/actions/trivy-scanner@jg/APP-361
       with:
         container-ref: ${{ env.CONTAINER_TAG }}
         severity: ${{ inputs.severity }}
