@@ -181,7 +181,7 @@ jobs:
       if: '${{inputs.build-new-container == true}}'
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ secrets.ECR_REPO_BASE_NAME }}/${{ inputs.microservice_name }}
+        ECR_REPOSITORY: ${{ inputs.microservice_name }}
         IMAGE_TAG: "${{ env.new_image_tag }}"
       run: |
         # Build a docker container 
@@ -209,7 +209,7 @@ jobs:
       if: '${{inputs.build-new-container == true && !cancelled() }}'
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ secrets.ECR_REPO_BASE_NAME }}/${{ inputs.microservice_name }}
+        ECR_REPOSITORY: ${{ inputs.microservice_name }}
         IMAGE_TAG: "${{ env.new_image_tag }}"
       run: |
         echo "Pushing image to ECR..."
