@@ -150,7 +150,7 @@ jobs:
       if: '${{inputs.build-new-container == false}}'
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ secrets.ECR_REPO_BASE_NAME }}/${{ inputs.microservice_name }}
+        ECR_REPOSITORY: ${{ inputs.microservice_name }}
       run: |
         # Tag existing docker container in ECR 
         MANIFEST=$(aws ecr batch-get-image --repository-name "$ECR_REPOSITORY" --image-ids imageTag="${{inputs.existing-image-tag}}" --output json | jq --raw-output --join-output '.images[0].imageManifest')
