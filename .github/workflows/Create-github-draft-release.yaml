@@ -36,13 +36,13 @@ on:
         description: A CSV list detailing specific files and directories to exclude from the provided paths (this variable serves only to limit scope of the paths variable).
         type: string
         default: ""
-        required: false
+        required: false      
     secrets:
-      GIT_USER_EMAIL:
-        description: "Secret named GIT_USER_EMAIL for the CI user email."
+      GIT_APP_ID:
+        description: "GitHub application ID."
         required: true
-      GIT_USER_NAME:
-        description: "Secret named ECR_REPO_BASE_NAME for the CI user name."
+      GIT_APP_PRIVATE_KEY:
+        description: "GitHub application private key."
         required: true
 
 jobs:
@@ -58,7 +58,21 @@ jobs:
  
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
+    
+    - uses: actions/create-github-app-token@v3
+      id: app-token
+      with:        
+        app-id: ${{ secrets.GIT_APP_ID }}
+        private-key: ${{ secrets.GIT_APP_PRIVATE_KEY }}
+    - name: Get GitHub App User ID
+      id: get-user-id
+      run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+      env:
+        GH_TOKEN: ${{ steps.app-token.outputs.token }}
+    - run: |
+        git config --global user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
+        git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'   
 
     - name: Set Variables
       run: |
@@ -79,11 +93,7 @@ jobs:
 
     - name: Create Release Branch from main
       if: ${{ inputs.update_zip_only == false }}
-      run: |
-        # Configure GitHub user
-        git config --global user.name ${{ secrets.GIT_USER_NAME }}
-        git config --global user.email  ${{ secrets.GIT_USER_EMAIL }}
-
+      run: |       
         # Create and push release branch
         git pull
         git checkout -b ${{env.final_release_branch_name}}
@@ -118,7 +128,6 @@ jobs:
         cd zipping_directory
         zip -r ${{env.final_artifact_name}} ./
         cp ${{env.final_artifact_name}} ../
-
 
     - name: Create Draft Release
       if: ${{ inputs.update_zip_only == false }}
