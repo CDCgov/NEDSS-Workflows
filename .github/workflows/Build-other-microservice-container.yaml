@@ -58,15 +58,48 @@ on:
         type: string
       trivyignores:
         description: 'Comma-separated list of relative paths in repository to one or more .trivyignore files, for usage see https://aquasecurity.github.io/trivy/v0.19.2/vulnerability/examples/filter/'
-        required: false         
-        type: string   
+        required: false
+        type: string
+      # Octopus Deploy inputs
+      create_octopus_release:
+        description: "Create an Octopus Deploy release after successfully pushing to ECR. If false, it will still default to true on the main branch if octopus_project or microservice_name is provided."
+        required: false
+        default: false
+        type: boolean
+      octopus_project:
+        description: "Octopus Deploy project name to create a release for. Defaults to microservice_name if not provided."
+        required: false
+        type: string
+      octopus_channel:
+        description: "Octopus Deploy release channel."
+        required: false
+        default: 'alpha-main'
+        type: string
+      octopus_space:
+        description: "Octopus Deploy space name."
+        required: false
+        default: 'Default'
+        type: string
+      octopus_server_url:
+        description: "Octopus Deploy server URL."
+        required: false
+        default: 'https://octopus.skylightnbs.com'
+        type: string
+      octopus_api_key_secret_name:
+        description: "Name or ARN of the AWS Secrets Manager secret holding the Octopus Deploy API key. Defaults to the AWS_OCTOPUS_API_KEY_ARN repo/org variable if not provided."
+        required: false
+        default: ''
+        type: string
     secrets:
       NBS_ACCOUNTID:
-        description: "Secret named NBS_ACCOUNTID where ECR resides."
-        required: true
+        description: "AWS Account ID where ECR resides."
+        required: false
+      CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID:
+        description: "Backward compatible AWS Account ID where ECR resides."
+        required: false
     outputs:
       output_image_tag:
-        description: "Container image tag" 
+        description: "Container image tag"
         value: ${{ jobs.build.outputs.output_image_tag }}
 
 jobs:
@@ -86,15 +119,15 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-    
+
     - name: Configure Environment Variables
       run: |
-        github_sha_short=$(git rev-parse --short "$GITHUB_SHA")      
-        github_repo_name="$(echo $GITHUB_REPOSITORY | cut -d'/' -f2)"        
+        github_sha_short=$(git rev-parse --short "$GITHUB_SHA")
+        github_repo_name="$(echo $GITHUB_REPOSITORY | cut -d'/' -f2)"
         github_tag=${GITHUB_REF#refs/tags/}
-        echo "github_sha_short=$github_sha_short" >> $GITHUB_ENV        
+        echo "github_sha_short=$github_sha_short" >> $GITHUB_ENV
         echo "github_tag=$github_tag" >> $GITHUB_ENV
-        echo "github_repo_name=$github_repo_name" >> $GITHUB_ENV        
+        echo "github_repo_name=$github_repo_name" >> $GITHUB_ENV
 
     - name: (Other) Create microservice version tag from dockerfile image name
       run: |
@@ -110,7 +143,7 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        role-to-assume: "arn:aws:iam::${{ secrets.NBS_ACCOUNTID }}:role/github-actions-nbs-deployment-role"
+        role-to-assume: "arn:aws:iam::${{ secrets.NBS_ACCOUNTID || secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID }}:role/github-actions-nbs-deployment-role"
         role-session-name: deploy-infrastructure
         aws-region: us-east-2
 
@@ -118,7 +151,7 @@ jobs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v2
 
-    - name: Build and tag ${{ inputs.microservice_name }} image 
+    - name: Build and tag ${{ inputs.microservice_name }} image
       id: build-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -126,12 +159,12 @@ jobs:
         IMAGE_TAG: "${{ env.new_image_tag }}"
       run: |
         # Build a docker container
-        echo "Building image.." 
+        echo "Building image.."
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ${{ inputs.dockerfile_relative_path}}
         echo "CONTAINER_TAG=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
-      
-    - name: Scan container image 
-      continue-on-error: true      
+
+    - name: Scan container image
+      continue-on-error: true
       uses: CDCgov/NEDSS-Workflows/.github/actions/trivy-scanner@main
       with:
         container-ref: ${{ env.CONTAINER_TAG }}
@@ -143,7 +176,7 @@ jobs:
         exit-code: ${{ inputs.exit-code }}
         trivyignores: ${{ inputs.trivyignores }}
         limit-severities-for-sarif: ${{inputs.limit-severities-for-sarif}}
-       
+
     - name: Push ${{ inputs.microservice_name }} image to Amazon ECR
       if: ${{ !cancelled() }}
       id: push-image
@@ -155,4 +188,78 @@ jobs:
         echo "Pushing image to ECR..."
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+  create-octopus-release:
+    name: Create Octopus Release
+    needs: build
+    if: ${{ (inputs.create_octopus_release == true || github.ref == 'refs/heads/main') && (inputs.octopus_api_key_secret_name != '' || vars.AWS_OCTOPUS_API_KEY_ARN != '') }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout NEDSS-Workflows (for mapping)
+      uses: actions/checkout@v4
+      with:
+        repository: CDCgov/NEDSS-Workflows
+        path: .workflows-repo
+
+    - name: Resolve Octopus Project and Package
+      id: resolve
+      shell: bash
+      run: |
+        MAPPING_FILE=".workflows-repo/octopus-mapping.yaml"
+        SERVICE_NAME="${{ inputs.microservice_name }}"
+        
+        # Check if the service name exists in the mapping file
+        # yq returns 'null' if the key doesn't exist
+        VAL=$(yq ".mappings.\"$SERVICE_NAME\"" $MAPPING_FILE)
+        
+        if [ "$VAL" == "null" ]; then
+          # Fallback if no mapping exists
+          PROJECT_NAME="${{ inputs.octopus_project || inputs.microservice_name }}"
+          PACKAGE_ID="${{ inputs.microservice_name }}"
+        elif [[ "$VAL" == *"project:"* ]]; then
+          # Complex mapping (object with project/package)
+          PROJECT_NAME=$(yq ".mappings.\"$SERVICE_NAME\".project" $MAPPING_FILE)
+          PACKAGE_ID=$(yq ".mappings.\"$SERVICE_NAME\".package" $MAPPING_FILE)
+        else
+          # Simple mapping (direct string)
+          PROJECT_NAME="$VAL"
+          PACKAGE_ID="${{ inputs.microservice_name }}"
+        fi
+        
+        # Override project name if explicitly provided via input
+        if [ -n "${{ inputs.octopus_project }}" ]; then
+          PROJECT_NAME="${{ inputs.octopus_project }}"
+        fi
+
+        echo "project_name=$PROJECT_NAME" >> $GITHUB_OUTPUT
+        echo "package_id=$PACKAGE_ID" >> $GITHUB_OUTPUT
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: "arn:aws:iam::${{ secrets.NBS_ACCOUNTID || secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID }}:role/github-actions-nbs-deployment-role"
+        role-session-name: octopus-release
+        aws-region: us-east-2
+
+    - name: Retrieve Octopus API key from AWS Secrets Manager
+      run: |
+        secret=$(aws secretsmanager get-secret-value \
+          --secret-id "${{ inputs.octopus_api_key_secret_name || vars.AWS_OCTOPUS_API_KEY_ARN }}" \
+          --query SecretString \
+          --output text)
+        echo "::add-mask::$secret"
+        echo "OCTOPUS_API_KEY=$secret" >> $GITHUB_ENV
+
+    - name: Create a release in Octopus Deploy
+      uses: OctopusDeploy/create-release-action@v4
+      env:
+        OCTOPUS_API_KEY: ${{ env.OCTOPUS_API_KEY }}
+        OCTOPUS_URL: ${{ inputs.octopus_server_url }}
+        OCTOPUS_SPACE: ${{ inputs.octopus_space }}
+      with:
+        project: ${{ steps.resolve.outputs.project_name }}
+        channel: ${{ inputs.octopus_channel }}
+        release_number: ${{ needs.build.outputs.output_image_tag }}
+        packages: "${{ steps.resolve.outputs.package_id }}:${{ needs.build.outputs.output_image_tag }}"
+        ignore_existing: true
 
