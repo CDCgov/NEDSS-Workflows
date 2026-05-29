@@ -67,7 +67,7 @@ on:
         type: string
       # Octopus Deploy inputs
       create_octopus_release:
-        description: "Create an Octopus Deploy release after successfully pushing to ECR. If false, it will still default to true on the main branch if octopus_project or microservice_name is provided."
+        description: "Create an Octopus Deploy release after successfully pushing to ECR. Even if false, it will still default to true on the main branch."
         required: false
         default: false
         type: boolean
