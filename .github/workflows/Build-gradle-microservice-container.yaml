@@ -210,14 +210,19 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: CDCgov/NEDSS-Workflows
-        path: .workflows-repo
+        path: workflows-repo
         ref: cm/octopus
+
+    - name: Debug - List files
+      run: |
+        echo "Current PWD: $(pwd)"
+        ls -R workflows-repo
 
     - name: Resolve Octopus Project and Package
       id: resolve
       shell: bash
       run: |
-        MAPPING_FILE=".workflows-repo/octopus-mapping.yaml"
+        MAPPING_FILE="workflows-repo/octopus-mapping.yaml"
         SERVICE_NAME="${{ inputs.microservice_name }}"
         
         # Check if the service name exists in the mapping file
