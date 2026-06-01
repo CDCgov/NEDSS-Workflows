@@ -77,7 +77,7 @@ on:
     secrets:
       CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID:
         description: "Secret named CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID where ECR resides."
-        required: true
+        required: false
       ECR_REPO_BASE_NAME:
         description: "Secret named ECR_REPO_BASE_NAME describing the ECR base path name."
         required: true
@@ -89,6 +89,9 @@ on:
         required: false
       HELM_TOKEN:
         description: "Secret named HELM_TOKEN to access helm chart repository"
+        required: false
+      NBS_ACCOUNTID:
+        description: "AWS Account ID where ECR resides."
         required: false
     outputs:
       output_image_tag:
@@ -152,7 +155,7 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        role-to-assume: "arn:aws:iam::${{ secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID }}:role/github-actions-nbs-deployment-role"
+        role-to-assume: "arn:aws:iam::${{ secrets.NBS_ACCOUNTID || secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID }}:role/github-actions-nbs-deployment-role"
         role-session-name: tag-containers
         aws-region: us-east-2
 
@@ -215,3 +218,67 @@ jobs:
         echo "Pushing image to ECR..."
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT  
+
+  create-octopus-release:
+    name: Create Octopus Release
+    needs: deploy
+    if: ${{ github.ref == 'refs/heads/main' && vars.AWS_OCTOPUS_API_KEY_ARN != '' }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout NEDSS-Workflows (for mapping)
+      uses: actions/checkout@v4
+      with:
+        repository: CDCgov/NEDSS-Workflows
+        path: .workflows-repo
+
+    - name: Resolve Octopus Project and Package
+      id: resolve
+      shell: bash
+      run: |
+        MAPPING_FILE=".workflows-repo/octopus-mapping.yaml"
+        SERVICE_NAME="${{ inputs.microservice_name }}"
+        
+        VAL=$(yq ".mappings.\"$SERVICE_NAME\"" $MAPPING_FILE)
+        
+        if [ "$VAL" == "null" ]; then
+          PROJECT_NAME="${{ inputs.microservice_name }}"
+          PACKAGE_ID="${{ inputs.microservice_name }}"
+        elif [[ "$VAL" == *"project:"* ]]; then
+          PROJECT_NAME=$(yq ".mappings.\"$SERVICE_NAME\".project" $MAPPING_FILE)
+          PACKAGE_ID=$(yq ".mappings.\"$SERVICE_NAME\".package" $MAPPING_FILE)
+        else
+          PROJECT_NAME="$VAL"
+          PACKAGE_ID="${{ inputs.microservice_name }}"
+        fi
+        
+        echo "project_name=$PROJECT_NAME" >> $GITHUB_OUTPUT
+        echo "package_id=$PACKAGE_ID" >> $GITHUB_OUTPUT
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: "arn:aws:iam::${{ secrets.NBS_ACCOUNTID || secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID }}:role/github-actions-nbs-deployment-role"
+        role-session-name: octopus-release
+        aws-region: us-east-2
+
+    - name: Retrieve Octopus API key from AWS Secrets Manager
+      run: |
+        secret=$(aws secretsmanager get-secret-value \
+          --secret-id "${{ vars.AWS_OCTOPUS_API_KEY_ARN }}" \
+          --query SecretString \
+          --output text)
+        echo "::add-mask::$secret"
+        echo "OCTOPUS_API_KEY=$secret" >> $GITHUB_ENV
+
+    - name: Create a release in Octopus Deploy
+      uses: OctopusDeploy/create-release-action@v4
+      env:
+        OCTOPUS_API_KEY: ${{ env.OCTOPUS_API_KEY }}
+        OCTOPUS_URL: 'https://octopus.skylightnbs.com'
+        OCTOPUS_SPACE: 'Default'
+      with:
+        project: ${{ steps.resolve.outputs.project_name }}
+        channel: 'alpha-main'
+        release_number: ${{ needs.deploy.outputs.output_image_tag }}
+        packages: "${{ steps.resolve.outputs.package_id }}:${{ needs.deploy.outputs.output_image_tag }}"
+        ignore_existing: true

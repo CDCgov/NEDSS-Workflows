@@ -5,6 +5,7 @@ mappings:
   # Simple mappings (microservice_name: "Octopus Project Name")
   nbs-gateway: "nbs-gateway Microservice"
   data-ingestion-service: "Data Ingestion Microservice"
+  nbs7-dataingestion-service: "Data Ingestion Microservice"
   data-processing-service: "Data Processing Microservice"
   nbs7-page-builder-api: "Page Builder API"
   nnd-case-notification-service: "NNDSS Case Notifications"

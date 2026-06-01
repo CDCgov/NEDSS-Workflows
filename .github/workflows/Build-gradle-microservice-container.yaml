@@ -211,6 +211,7 @@ jobs:
       with:
         repository: CDCgov/NEDSS-Workflows
         path: .workflows-repo
+        ref: cm/octopus
 
     - name: Resolve Octopus Project and Package
       id: resolve
