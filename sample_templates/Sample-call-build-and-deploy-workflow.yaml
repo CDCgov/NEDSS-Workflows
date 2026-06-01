@@ -26,10 +26,10 @@ jobs:
       microservice_name: <microservice_name>
       dockerfile_relative_path: <dockerfile_relative_path>
       environment_classifier: <environment_classifier>
-      update_helm_chart: <update_helm_chart> 
-      values_file_with_path: <values_file_with_path>
+      # create_octopus_release: true # Optional: defaults to true on 'main' branch
+      # octopus_project: '<octopus_project_name>' # Optional: defaults to <microservice_name>
     secrets:
-      CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID: ${{secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID}}
+      NBS_ACCOUNTID: ${{secrets.NBS_ACCOUNTID}}
       ECR_REPO_BASE_NAME: ${{secrets.ECR_REPO_BASE_NAME}}
       GIT_USER_EMAIL: ${{secrets.GIT_USER_EMAIL}}
       GIT_USER_NAME: ${{secrets.GIT_USER_NAME}}
