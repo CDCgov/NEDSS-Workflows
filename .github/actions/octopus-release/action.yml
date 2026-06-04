@@ -1,0 +1,103 @@
+name: 'Create Octopus Release'
+description: 'Consolidated logic for resolving mapping, retrieving API keys, and creating an Octopus Deploy release'
+inputs:
+  microservice_name:
+    description: 'Name of the microservice'
+    required: true
+  octopus_project:
+    description: 'Explicit Octopus project name (overrides mapping)'
+    required: false
+  octopus_channel:
+    description: 'Octopus channel'
+    required: false
+    default: 'alpha-main'
+  octopus_space:
+    description: 'Octopus space'
+    required: false
+    default: 'Default'
+  octopus_server_url:
+    description: 'Octopus server URL'
+    required: false
+    default: 'https://octopus.skylightnbs.com'
+  octopus_api_key_secret_id:
+    description: 'AWS Secrets Manager Secret ID or ARN for the Octopus API key'
+    required: true
+  release_number:
+    description: 'The release version/tag'
+    required: true
+  aws_account_id:
+    description: 'AWS Account ID for assuming the deployment role'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout NEDSS-Workflows (for mapping)
+      uses: actions/checkout@v4
+      with:
+        repository: CDCgov/NEDSS-Workflows
+        path: workflows-repo
+        ref: main
+
+    - name: Resolve Octopus Project and Package
+      id: resolve
+      shell: bash
+      run: |
+        MAPPING_FILE="workflows-repo/octopus-mapping.yaml"
+        SERVICE_NAME="${{ inputs.microservice_name }}"
+
+        # Check if the service name exists in the mapping file
+        # yq returns 'null' if the key doesn't exist
+        VAL=$(yq ".mappings.\"$SERVICE_NAME\"" "$MAPPING_FILE")
+
+        if [ "$VAL" == "null" ]; then
+          # Fallback if no mapping exists
+          PROJECT_NAME="${{ inputs.octopus_project || inputs.microservice_name }}"
+          PACKAGE_ID="${{ inputs.microservice_name }}"
+        elif [[ "$VAL" == *"project:"* ]]; then
+          # Complex mapping (object with project/package)
+          PROJECT_NAME=$(yq ".mappings.\"$SERVICE_NAME\".project" "$MAPPING_FILE")
+          PACKAGE_ID=$(yq ".mappings.\"$SERVICE_NAME\".package" "$MAPPING_FILE")
+        else
+          # Simple mapping (direct string)
+          PROJECT_NAME="$VAL"
+          PACKAGE_ID="${{ inputs.microservice_name }}"
+        fi
+
+        # Override project name if explicitly provided via input
+        if [ -n "${{ inputs.octopus_project }}" ]; then
+          PROJECT_NAME="${{ inputs.octopus_project }}"
+        fi
+
+        echo "project_name=$PROJECT_NAME" >> $GITHUB_OUTPUT
+        echo "package_id=$PACKAGE_ID" >> $GITHUB_OUTPUT
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: "arn:aws:iam::${{ inputs.aws_account_id }}:role/github-actions-nbs-deployment-role"
+        role-session-name: octopus-release
+        aws-region: us-east-2
+
+    - name: Retrieve Octopus API key from AWS Secrets Manager
+      shell: bash
+      run: |
+        secret=$(aws secretsmanager get-secret-value \
+          --secret-id "${{ inputs.octopus_api_key_secret_id }}" \
+          --query SecretString \
+          --output text)
+        echo "::add-mask::$secret"
+        echo "OCTOPUS_API_KEY=$secret" >> $GITHUB_ENV
+
+    - name: Create a release in Octopus Deploy
+      uses: OctopusDeploy/create-release-action@v4
+      env:
+        OCTOPUS_API_KEY: ${{ env.OCTOPUS_API_KEY }}
+        OCTOPUS_URL: ${{ inputs.octopus_server_url }}
+        OCTOPUS_SPACE: ${{ inputs.octopus_space }}
+      with:
+        project: ${{ steps.resolve.outputs.project_name }}
+        channel: ${{ inputs.octopus_channel }}
+        release_number: ${{ inputs.release_number }}
+        packages: "${{ steps.resolve.outputs.package_id }}:${{ inputs.release_number }}"
+        ignore_existing: true
