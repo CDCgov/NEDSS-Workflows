@@ -53,25 +53,24 @@ runs:
         # yq returns 'null' if the key doesn't exist
         VAL=$(yq ".mappings.\"$SERVICE_NAME\"" "$MAPPING_FILE")
 
-        if [ "$VAL" == "null" ]; then
-          # Fallback if no mapping exists
-          PROJECT_NAME="${{ inputs.octopus_project || inputs.microservice_name }}"
-          PACKAGE_ID="${{ inputs.microservice_name }}"
-        elif [[ "$VAL" == *"project:"* ]]; then
+        if [ "$VAL" == "null" ] && [ -z "${{ inputs.octopus_project }}" ]; then
+          echo "Service $SERVICE_NAME not in mapping and no explicit project provided. Skipping release creation."
+          echo "skip=true" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        
+        echo "skip=false" >> $GITHUB_OUTPUT
+        
+        if [[ "$VAL" == *"project:"* ]]; then
           # Complex mapping (object with project/package)
           PROJECT_NAME=$(yq ".mappings.\"$SERVICE_NAME\".project" "$MAPPING_FILE")
           PACKAGE_ID=$(yq ".mappings.\"$SERVICE_NAME\".package" "$MAPPING_FILE")
         else
           # Simple mapping (direct string)
-          PROJECT_NAME="$VAL"
+          PROJECT_NAME="${{ inputs.octopus_project || VAL }}"
           PACKAGE_ID="${{ inputs.microservice_name }}"
         fi
-
-        # Override project name if explicitly provided via input
-        if [ -n "${{ inputs.octopus_project }}" ]; then
-          PROJECT_NAME="${{ inputs.octopus_project }}"
-        fi
-
+        
         echo "project_name=$PROJECT_NAME" >> $GITHUB_OUTPUT
         echo "package_id=$PACKAGE_ID" >> $GITHUB_OUTPUT
 
@@ -85,6 +84,9 @@ runs:
     - name: Retrieve Octopus API key from AWS Secrets Manager
       shell: bash
       run: |
+        if [ "${{ steps.resolve.outputs.skip }}" == "true" ]; then
+          exit 0
+        fi
         secret=$(aws secretsmanager get-secret-value \
           --secret-id "${{ inputs.octopus_api_key_secret_id }}" \
           --query SecretString \
@@ -93,6 +95,7 @@ runs:
         echo "OCTOPUS_API_KEY=$secret" >> $GITHUB_ENV
 
     - name: Create a release in Octopus Deploy
+      if: steps.resolve.outputs.skip != 'true'
       uses: OctopusDeploy/create-release-action@v4
       env:
         OCTOPUS_API_KEY: ${{ env.OCTOPUS_API_KEY }}
