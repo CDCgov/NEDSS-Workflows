@@ -43,6 +43,9 @@ runs:
       id: resolve
       shell: bash
       run: |
+        # This step reads the octopus-mapping.yaml file to determine the correct
+        # Octopus project name and package ID based on the provided microservice name.
+        # The file lives in the root of the NEDSS-Workflows repo
         MAPPING_FILE="workflows-repo/octopus-mapping.yaml"
         SERVICE_NAME="${{ inputs.microservice_name }}"
 
