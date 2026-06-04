@@ -33,7 +33,7 @@ runs:
   using: "composite"
   steps:
     - name: Checkout NEDSS-Workflows (for mapping)
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: CDCgov/NEDSS-Workflows
         path: workflows-repo
@@ -49,33 +49,39 @@ runs:
         MAPPING_FILE="workflows-repo/octopus-mapping.yaml"
         SERVICE_NAME="${{ inputs.microservice_name }}"
 
-        # Check if the service name exists in the mapping file
-        # yq returns 'null' if the key doesn't exist
-        VAL=$(yq ".mappings.\"$SERVICE_NAME\"" "$MAPPING_FILE")
+        # Use yq to check for existence directly
+        EXISTS=$(yq ".mappings | has(\"$SERVICE_NAME\")" "$MAPPING_FILE")
 
-        if [ "$VAL" == "null" ] && [ -z "${{ inputs.octopus_project }}" ]; then
+        if [ "$EXISTS" != "true" ] && [ -z "${{ inputs.octopus_project }}" ]; then
           echo "Service $SERVICE_NAME not in mapping and no explicit project provided. Skipping release creation."
           echo "skip=true" >> $GITHUB_OUTPUT
           exit 0
         fi
-        
+
         echo "skip=false" >> $GITHUB_OUTPUT
-        
-        if [[ "$VAL" == *"project:"* ]]; then
-          # Complex mapping (object with project/package)
-          PROJECT_NAME=$(yq ".mappings.\"$SERVICE_NAME\".project" "$MAPPING_FILE")
-          PACKAGE_ID=$(yq ".mappings.\"$SERVICE_NAME\".package" "$MAPPING_FILE")
+
+        # If exists, resolve, otherwise fall back to explicit or microservice name
+        if [ "$EXISTS" == "true" ]; then
+          # Determine if simple or complex mapping
+          IS_COMPLEX=$(yq ".mappings.\"$SERVICE_NAME\" | type == \"!!map\"" "$MAPPING_FILE")
+
+          if [ "$IS_COMPLEX" == "true" ]; then
+            PROJECT_NAME=$(yq ".mappings.\"$SERVICE_NAME\".project" "$MAPPING_FILE" | tr -d '"')
+            PACKAGE_ID=$(yq ".mappings.\"$SERVICE_NAME\".package" "$MAPPING_FILE" | tr -d '"')
+          else
+            PROJECT_NAME=$(yq ".mappings.\"$SERVICE_NAME\"" "$MAPPING_FILE" | tr -d '"')
+            PACKAGE_ID="${{ inputs.microservice_name }}"
+          fi
         else
-          # Simple mapping (direct string)
-          PROJECT_NAME="${{ inputs.octopus_project || VAL }}"
+          PROJECT_NAME="${{ inputs.octopus_project || inputs.microservice_name }}"
           PACKAGE_ID="${{ inputs.microservice_name }}"
         fi
-        
+
         echo "project_name=$PROJECT_NAME" >> $GITHUB_OUTPUT
         echo "package_id=$PACKAGE_ID" >> $GITHUB_OUTPUT
 
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
+      uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: "arn:aws:iam::${{ inputs.aws_account_id }}:role/github-actions-nbs-deployment-role"
         role-session-name: octopus-release
