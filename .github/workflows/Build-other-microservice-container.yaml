@@ -15,17 +15,17 @@ on:
         description: Metadata to append to application version. Ex. if version=1.0.0, and environment_classifier=SNAPSHOT result will be 1.0.0-SNAPSHOT.<githubsha>.
         required: true
         type: string
-      # Container scanning inputs   
+      # Container scanning inputs
       severity:
         description: 'Severities of vulnerabilities to be scanned for and displayed (UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL)'
-        required: false  
+        required: false
         default: 'CRITICAL,HIGH'
         type: string
       limit-severities-for-sarif:
         description: 'By default SARIF format enforces output of all vulnerabilities regardless of configured severities. To override this behavior set this parameter to true'
-        required: false  
+        required: false
         default: true
-        type: boolean 
+        type: boolean
       upload-to-github-security-tab:
         description: 'Upload results to GitHub security tab?'
         required: false
@@ -35,25 +35,25 @@ on:
         description: Ignore unpatched/unfixed vulnerabilities
         required: false
         default: false
-        type: boolean 
+        type: boolean
       skip-dirs:
         description: 'Comma separated list of directories where traversal is skipped'
-        required: false 
+        required: false
         default: ''
         type: string
       skip-files:
         description: 'Comma separated list of files where traversal is skipped'
-        required: false  
+        required: false
         default: ''
         type: string
       timeout:
         description: 'Scan timeout duration'
-        required: false  
+        required: false
         default: '10m0s'
         type: string
       exit-code:
         description: 'Exit code when specified vulnerabilities are found (0).'
-        required: false  
+        required: false
         default: '0'
         type: string
       trivyignores:
@@ -195,71 +195,14 @@ jobs:
     if: ${{ (inputs.create_octopus_release == true || github.ref == 'refs/heads/main') && (inputs.octopus_api_key_secret_name != '' || vars.AWS_OCTOPUS_API_KEY_ARN != '') }}
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout NEDSS-Workflows (for mapping)
-      uses: actions/checkout@v4
+    - name: Create Octopus Release
+      uses: CDCgov/NEDSS-Workflows/.github/actions/octopus-release@main
       with:
-        repository: CDCgov/NEDSS-Workflows
-        path: .workflows-repo
-
-    - name: Resolve Octopus Project and Package
-      id: resolve
-      shell: bash
-      run: |
-        MAPPING_FILE=".workflows-repo/octopus-mapping.yaml"
-        SERVICE_NAME="${{ inputs.microservice_name }}"
-        
-        # Check if the service name exists in the mapping file
-        # yq returns 'null' if the key doesn't exist
-        VAL=$(yq ".mappings.\"$SERVICE_NAME\"" $MAPPING_FILE)
-        
-        if [ "$VAL" == "null" ]; then
-          # Fallback if no mapping exists
-          PROJECT_NAME="${{ inputs.octopus_project || inputs.microservice_name }}"
-          PACKAGE_ID="${{ inputs.microservice_name }}"
-        elif [[ "$VAL" == *"project:"* ]]; then
-          # Complex mapping (object with project/package)
-          PROJECT_NAME=$(yq ".mappings.\"$SERVICE_NAME\".project" $MAPPING_FILE)
-          PACKAGE_ID=$(yq ".mappings.\"$SERVICE_NAME\".package" $MAPPING_FILE)
-        else
-          # Simple mapping (direct string)
-          PROJECT_NAME="$VAL"
-          PACKAGE_ID="${{ inputs.microservice_name }}"
-        fi
-        
-        # Override project name if explicitly provided via input
-        if [ -n "${{ inputs.octopus_project }}" ]; then
-          PROJECT_NAME="${{ inputs.octopus_project }}"
-        fi
-
-        echo "project_name=$PROJECT_NAME" >> $GITHUB_OUTPUT
-        echo "package_id=$PACKAGE_ID" >> $GITHUB_OUTPUT
-
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: "arn:aws:iam::${{ secrets.NBS_ACCOUNTID || secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID }}:role/github-actions-nbs-deployment-role"
-        role-session-name: octopus-release
-        aws-region: us-east-2
-
-    - name: Retrieve Octopus API key from AWS Secrets Manager
-      run: |
-        secret=$(aws secretsmanager get-secret-value \
-          --secret-id "${{ inputs.octopus_api_key_secret_name || vars.AWS_OCTOPUS_API_KEY_ARN }}" \
-          --query SecretString \
-          --output text)
-        echo "::add-mask::$secret"
-        echo "OCTOPUS_API_KEY=$secret" >> $GITHUB_ENV
-
-    - name: Create a release in Octopus Deploy
-      uses: OctopusDeploy/create-release-action@v4
-      env:
-        OCTOPUS_API_KEY: ${{ env.OCTOPUS_API_KEY }}
-        OCTOPUS_URL: ${{ inputs.octopus_server_url }}
-        OCTOPUS_SPACE: ${{ inputs.octopus_space }}
-      with:
-        project: ${{ steps.resolve.outputs.project_name }}
-        channel: ${{ inputs.octopus_channel }}
+        microservice_name: ${{ inputs.microservice_name }}
+        octopus_project: ${{ inputs.octopus_project }}
+        octopus_channel: ${{ inputs.octopus_channel }}
+        octopus_space: ${{ inputs.octopus_space }}
+        octopus_server_url: ${{ inputs.octopus_server_url }}
+        octopus_api_key_secret_id: ${{ inputs.octopus_api_key_secret_name || vars.AWS_OCTOPUS_API_KEY_ARN }}
         release_number: ${{ needs.build.outputs.output_image_tag }}
-        packages: "${{ steps.resolve.outputs.package_id }}:${{ needs.build.outputs.output_image_tag }}"
-        ignore_existing: true
-
+        aws_account_id: ${{ secrets.NBS_ACCOUNTID || secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID }}
