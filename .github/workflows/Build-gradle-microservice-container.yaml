@@ -224,7 +224,7 @@ jobs:
         HARBOR_REPOSITORY: ${{ inputs.microservice_name }}
         IMAGE_TAG: "${{ env.new_image_tag }}"
       run: |
-        echo "Pushing image to ECR..."
+        echo "Pushing image to Harbor..."
         docker push $HARBOR_REGISTRY/$HARBOR_REPOSITORY:$IMAGE_TAG
         echo "harbor_image=$HARBOR_REGISTRY/$HARBOR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
   
