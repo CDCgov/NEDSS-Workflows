@@ -1,0 +1,22 @@
+# This file maps GitHub microservice names to Octopus Deploy project names and package IDs.
+# It is used by reusable workflows to automatically determine Octopus deployment targets.
+
+mappings:
+  # Simple mappings (microservice_name: "Octopus Project Name")
+  nbs7-dataingestion-service: "Data Ingestion Microservice"
+  nbs7-data-processing-service: "Data Processing Microservice"
+  nbs7-liquibase: "Liquibase Service"
+  nbs7-nbs-gateway: "nbs-gateway Microservice"
+  nbs7-page-builder-api: "Page Builder API"
+
+  # Complex mappings for projects that deploy multiple services
+  # If a service belongs to a multi-service project, define its project and specific package ID.
+  nbs7-modernization-api:
+    project: "Elasticsearch_Modernization-Api_Nifi-efs Microservice Deployment"
+    package: "nbs7-modernization-api"
+  nbs7-elasticsearch:
+    project: "Elasticsearch_Modernization-Api_Nifi-efs Microservice Deployment"
+    package: "nbs7-elasticsearch"
+  nbs7-nifi:
+    project: "Elasticsearch_Modernization-Api_Nifi-efs Microservice Deployment"
+    package: "nbs7-nifi"

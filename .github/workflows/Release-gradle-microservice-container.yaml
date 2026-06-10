@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       existing-image-tag:
-        description: 'Image tag of existing container in ECR (not used if build-new-container=true).'        
+        description: 'Image tag of existing container in ECR (not used if build-new-container=true).'
         required: false
         type: string
       build-new-container:
@@ -20,7 +20,7 @@ on:
         description: Version of java which you are using to build you code.
         required: false
         default: '17'
-        type: string 
+        type: string
       dockerfile_relative_path:
         description: "Relative path to dockerfile being built (use '-f' docker argument if the dockerfile referenced from the root directory)."
         required: false
@@ -29,17 +29,17 @@ on:
         description: Metadata to append to application version (A setting of NONE, indicates all metadata to be stripped). Ex. if version=1.0.0, and environment_classifier=SNAPSHOT result will be 1.0.0-SNAPSHOT.<githubsha>. If version=1.0.0, and environment_classifier=NONE result will be 1.0.0.
         required: true
         type: string
-      # Container scanning inputs   
+      # Container scanning inputs
       severity:
         description: 'Severities of vulnerabilities to be scanned for and displayed (UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL)'
-        required: false  
+        required: false
         default: 'CRITICAL,HIGH'
         type: string
       limit-severities-for-sarif:
         description: 'By default SARIF format enforces output of all vulnerabilities regardless of configured severities. To override this behavior set this parameter to true'
-        required: false  
+        required: false
         default: true
-        type: boolean 
+        type: boolean
       upload-to-github-security-tab:
         description: 'Upload results to GitHub security tab?'
         required: false
@@ -49,35 +49,35 @@ on:
         description: Ignore unpatched/unfixed vulnerabilities
         required: false
         default: false
-        type: boolean 
+        type: boolean
       skip-dirs:
         description: 'Comma separated list of directories where traversal is skipped'
-        required: false 
+        required: false
         default: ''
         type: string
       skip-files:
         description: 'Comma separated list of files where traversal is skipped'
-        required: false  
+        required: false
         default: ''
         type: string
       timeout:
         description: 'Scan timeout duration'
-        required: false  
+        required: false
         default: '10m0s'
         type: string
       exit-code:
         description: 'Exit code when specified vulnerabilities are found (0).'
-        required: false  
+        required: false
         default: '0'
         type: string
       trivyignores:
         description: 'Comma-separated list of relative paths in repository to one or more .trivyignore files, for usage see https://aquasecurity.github.io/trivy/v0.19.2/vulnerability/examples/filter/'
-        required: false         
-        type: string     
+        required: false
+        type: string
     secrets:
       CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID:
         description: "Secret named CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID where ECR resides."
-        required: true
+        required: false
       ECR_REPO_BASE_NAME:
         description: "Secret named ECR_REPO_BASE_NAME describing the ECR base path name."
         required: true
@@ -90,9 +90,12 @@ on:
       HELM_TOKEN:
         description: "Secret named HELM_TOKEN to access helm chart repository"
         required: false
+      NBS_ACCOUNTID:
+        description: "AWS Account ID where ECR resides."
+        required: false
     outputs:
       output_image_tag:
-        description: "Container image tag" 
+        description: "Container image tag"
         value: ${{ jobs.deploy.outputs.output_image_tag }}
 
 jobs:
@@ -121,9 +124,9 @@ jobs:
         cache: 'gradle'
 
     - name: Configure Environment Variables
-      run: |  
-        github_sha_short=$(git rev-parse --short "$GITHUB_SHA")   
-        github_repo_name="$(echo $GITHUB_REPOSITORY | cut -d'/' -f2)"  
+      run: |
+        github_sha_short=$(git rev-parse --short "$GITHUB_SHA")
+        github_repo_name="$(echo $GITHUB_REPOSITORY | cut -d'/' -f2)"
         echo "github_repo_name=$github_repo_name" >> $GITHUB_ENV
         echo "github_sha_short=$github_sha_short" >> $GITHUB_ENV
 
@@ -135,7 +138,7 @@ jobs:
         new_image_tag=$app_version.${{env.github_sha_short}}
         echo "new_image_tag=$new_image_tag" >> $GITHUB_ENV
         echo "new_image_tag=$new_image_tag" >> $GITHUB_OUTPUT
-    
+
     # Create an image tag with no metadata
     - name: (Gradle) Create microservice version tag with metadata
       if: ${{ inputs.environment_classifier == 'NONE' }}
@@ -152,7 +155,7 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        role-to-assume: "arn:aws:iam::${{ secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID }}:role/github-actions-nbs-deployment-role"
+        role-to-assume: "arn:aws:iam::${{ secrets.NBS_ACCOUNTID || secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID }}:role/github-actions-nbs-deployment-role"
         role-session-name: tag-containers
         aws-region: us-east-2
 
@@ -167,14 +170,14 @@ jobs:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: ${{ inputs.microservice_name }}
       run: |
-        # Tag existing docker container in ECR 
+        # Tag existing docker container in ECR
         MANIFEST=$(aws ecr batch-get-image --repository-name "$ECR_REPOSITORY" --image-ids imageTag="${{inputs.existing-image-tag}}" --output json | jq --raw-output --join-output '.images[0].imageManifest')
 
         aws ecr put-image --repository-name "$ECR_REPOSITORY" --image-tag "${{env.new_image_tag}}" --image-manifest "$MANIFEST"
-    
+
     - name: Checkout
       if: '${{inputs.build-new-container == true}}'
-      uses: actions/checkout@v4        
+      uses: actions/checkout@v4
 
     - name: Build and tag ${{ inputs.microservice_name }} image
       id: build-image
@@ -184,13 +187,13 @@ jobs:
         ECR_REPOSITORY: ${{ inputs.microservice_name }}
         IMAGE_TAG: "${{ env.new_image_tag }}"
       run: |
-        # Build a docker container 
-        echo "Building image.." 
+        # Build a docker container
+        echo "Building image.."
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ${{inputs.dockerfile_relative_path}}
-        echo "CONTAINER_TAG=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV        
+        echo "CONTAINER_TAG=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
 
     - name: Scan container image
-      continue-on-error: true 
+      continue-on-error: true
       uses: CDCgov/NEDSS-Workflows/.github/actions/trivy-scanner@main
       if: '${{inputs.build-new-container == true}}'
       with:
@@ -214,4 +217,18 @@ jobs:
       run: |
         echo "Pushing image to ECR..."
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT  
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+  create-octopus-release:
+    name: Create Octopus Release
+    needs: deploy
+    if: ${{ github.ref == 'refs/heads/main' && vars.AWS_OCTOPUS_API_KEY_ARN != '' }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Create Octopus Release
+      uses: CDCgov/NEDSS-Workflows/.github/actions/octopus-release@main
+      with:
+        microservice_name: ${{ inputs.microservice_name }}
+        octopus_api_key_secret_id: ${{ vars.AWS_OCTOPUS_API_KEY_ARN }}
+        release_number: ${{ needs.deploy.outputs.output_image_tag }}
+        aws_account_id: ${{ secrets.NBS_ACCOUNTID || secrets.CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID }}
