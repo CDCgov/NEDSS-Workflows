@@ -94,10 +94,10 @@ on:
       NBS_ACCOUNTID:
         description: "AWS Account ID where ECR resides."
         required: false
-      harbor_robot_username:
+      HARBOR_ROBOT_USERNAME:
         description: "Account name for the Harbor robot account assigned to GitHub Actions"
         required: true
-      harbor_robot_secret:
+      HARBOR_ROBOT_SECRET:
         description: "Unique authentication secret for the Harbor robot account assigned to GitHub Actions"
         required: true
       CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID:
@@ -162,8 +162,8 @@ jobs:
       uses: docker/login-action@v4
       with:
         registry: ${{ vars.harbor_url }}
-        username: ${{ secrets.harbor_robot_username }}
-        password: ${{ secrets.harbor_robot_secret }}
+        username: ${{ secrets.HARBOR_ROBOT_USERNAME }}
+        password: ${{ secrets.HARBOR_ROBOT_SECRET }}
 
     - name: Build and tag ${{ inputs.microservice_name }} image 
       id: build-image
