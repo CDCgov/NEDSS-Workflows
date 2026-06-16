@@ -94,6 +94,12 @@ on:
       NBS_ACCOUNTID:
         description: "AWS Account ID where ECR resides."
         required: false
+      HARBOR_ROBOT_USERNAME:
+        description: "Account name for the Harbor robot account assigned to GitHub Actions"
+        required: true
+      HARBOR_ROBOT_SECRET:
+        description: "Unique authentication secret for the Harbor robot account assigned to GitHub Actions"
+        required: true
       CDC_NBS_SANDBOX_SHARED_SERVICES_ACCOUNTID:
         description: "Backward compatible AWS Account ID where ECR resides."
         required: false
@@ -151,16 +157,26 @@ jobs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v2
 
-    - name: Build and tag ${{ inputs.microservice_name }} image
+    - name: Log in to Harbor
+      id: log-in-harbor
+      uses: docker/login-action@v4
+      with:
+        registry: ${{ vars.harbor_url }}
+        username: ${{ secrets.HARBOR_ROBOT_USERNAME }}
+        password: ${{ secrets.HARBOR_ROBOT_SECRET }}
+
+    - name: Build and tag ${{ inputs.microservice_name }} image 
       id: build-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: ${{ inputs.microservice_name }}
+        HARBOR_REGISTRY: ${{ vars.harbor_url }}
+        HARBOR_REPOSITORY: ${{ inputs.microservice_name }}
         IMAGE_TAG: "${{ env.new_image_tag }}"
       run: |
         # Build a docker container
-        echo "Building image.."
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ${{ inputs.dockerfile_relative_path}}
+        echo "Building image.." 
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $HARBOR_REGISTRY/$HARBOR_REPOSITORY:$IMAGE_TAG ${{ inputs.dockerfile_relative_path}}
         echo "CONTAINER_TAG=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
 
     - name: Scan container image
@@ -188,6 +204,18 @@ jobs:
         echo "Pushing image to ECR..."
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+    - name: Push ${{ inputs.microservice_name }} image to Harbor
+      if: ${{ !cancelled() }}
+      id: push-image-harbor
+      env:
+        HARBOR_REGISTRY: ${{ vars.harbor_url }}
+        HARBOR_REPOSITORY: ${{ inputs.microservice_name }}
+        IMAGE_TAG: "${{ env.new_image_tag }}"
+      run: |
+        echo "Pushing image to Harbor..."
+        docker push $HARBOR_REGISTRY/$HARBOR_REPOSITORY:$IMAGE_TAG
+        echo "harbor_image=$HARBOR_REGISTRY/$HARBOR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
   create-octopus-release:
     name: Create Octopus Release
