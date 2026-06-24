@@ -19,7 +19,7 @@ on:
       severity:
         description: 'Severities of vulnerabilities to be scanned for and displayed (UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL)'
         required: false
-        default: 'CRITICAL,HIGH'
+        default: 'CRITICAL,HIGH,MEDIUM'
         type: string
       limit-severities-for-sarif:
         description: 'By default SARIF format enforces output of all vulnerabilities regardless of configured severities. To override this behavior set this parameter to true'
