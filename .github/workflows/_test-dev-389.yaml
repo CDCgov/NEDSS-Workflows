@@ -1,7 +1,9 @@
 # THROWAWAY — delete before merging DEV-389 to main
 name: TEST DEV-389 provenance
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - Nuel/dev-389-provenance-attestation
 
 jobs:
   test-other:
