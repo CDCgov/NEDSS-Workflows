@@ -125,7 +125,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    # DEV-389: buildx with docker-container driver is required for SLSA provenance attestations.
+    # buildx with docker-container driver is required for SLSA provenance attestations.
     # The default 'docker' driver silently drops attestations on push.
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -171,7 +171,7 @@ jobs:
         username: ${{ secrets.HARBOR_ROBOT_USERNAME }}
         password: ${{ secrets.HARBOR_ROBOT_SECRET }}
 
-    # DEV-389: build locally with --load so Trivy can scan the image before push.
+    # build locally with --load so Trivy can scan the image before push.
     # Attestations are not generated here — they come from the push step below.
     - name: Build ${{ inputs.microservice_name }} image (local, for scan)
       id: build-image
@@ -203,7 +203,7 @@ jobs:
         trivyignores: ${{ inputs.trivyignores }}
         limit-severities-for-sarif: ${{inputs.limit-severities-for-sarif}}
 
-    # DEV-389: replaces the two separate `docker push` steps.
+    # replaces the two separate `docker push` steps.
     # buildx re-uses the cached layers from the local build above (near-instant),
     # then pushes to both registries with an SLSA provenance attestation attached
     # as an OCI referrer on each. Verify with: docker buildx imagetools inspect.
