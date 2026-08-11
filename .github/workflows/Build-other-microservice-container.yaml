@@ -176,7 +176,15 @@ jobs:
       run: |
         # Build a docker container
         echo "Building image.." 
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $HARBOR_REGISTRY/$HARBOR_REPOSITORY:$IMAGE_TAG ${{ inputs.dockerfile_relative_path}}
+
+        TAGS="-t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $HARBOR_REGISTRY/$HARBOR_REPOSITORY:$IMAGE_TAG"
+
+        if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          echo "Main branch detected, adding latest tags"
+          TAGS="$TAGS -t $ECR_REGISTRY/$ECR_REPOSITORY:latest $HARBOR_REGISTRY/$HARBOR_REPOSITORY:latest"
+        fi
+
+        docker build $TAGS ${{ inputs.dockerfile_relative_path}}
         echo "CONTAINER_TAG=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
 
     - name: Scan container image
@@ -202,7 +210,7 @@ jobs:
         IMAGE_TAG: "${{ env.new_image_tag }}"
       run: |
         echo "Pushing image to ECR..."
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY --all-tags
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
     - name: Push ${{ inputs.microservice_name }} image to Harbor
@@ -214,41 +222,8 @@ jobs:
         IMAGE_TAG: "${{ env.new_image_tag }}"
       run: |
         echo "Pushing image to Harbor..."
-        docker push $HARBOR_REGISTRY/$HARBOR_REPOSITORY:$IMAGE_TAG
+        docker push $HARBOR_REGISTRY/$HARBOR_REPOSITORY --all-tags
         echo "harbor_image=$HARBOR_REGISTRY/$HARBOR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-
-    - name: Build and tag ${{ inputs.microservice_name }} image (latest)
-      if: ${{ !cancelled() && github.ref_name == 'main' }}
-      id: build-image-latest
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ inputs.microservice_name }}
-        HARBOR_REGISTRY: ${{ vars.harbor_url }}
-        HARBOR_REPOSITORY: ${{ inputs.microservice_name }}
-      run: |
-        # Build a docker container 
-        echo "Tagging latest.." 
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -t $HARBOR_REGISTRY/$HARBOR_REPOSITORY:latest ${{ inputs.dockerfile_relative_path}}
-
-    - name: Push ${{ inputs.microservice_name }} image to Amazon ECR (latest)
-      if: ${{ !cancelled() && github.ref_name == 'main' }}
-      id: push-image-latest
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ inputs.microservice_name }}
-      run: |
-        echo "Pushing latest image to ECR..."
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-
-    - name: Push ${{ inputs.microservice_name }} image to Harbor (latest)
-      if: ${{ !cancelled() && github.ref_name == 'main' }}
-      id: push-image-harbor-latest
-      env:
-        HARBOR_REGISTRY: ${{ vars.harbor_url }}
-        HARBOR_REPOSITORY: ${{ inputs.microservice_name }}
-      run: |
-        echo "Pushing latest image to Harbor..."
-        docker push $HARBOR_REGISTRY/$HARBOR_REPOSITORY:latest
 
   create-octopus-release:
     name: Create Octopus Release
