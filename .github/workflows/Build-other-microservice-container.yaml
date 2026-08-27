@@ -116,7 +116,6 @@ jobs:
       output_image_tag: ${{ steps.set-env-variables.outputs.output_image_tag }}
 
     # These permissions are needed to interact with GitHub's OIDC Token endpoint.
-    # New comment
     permissions:
       id-token: write
       contents: read
@@ -125,6 +124,13 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+
+    # buildx with docker-container driver is required for SLSA provenance attestations.
+    # The default 'docker' driver silently drops attestations on push.
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      with:
+        driver: docker-container
 
     - name: Configure Environment Variables
       run: |
@@ -165,18 +171,22 @@ jobs:
         username: ${{ secrets.HARBOR_ROBOT_USERNAME }}
         password: ${{ secrets.HARBOR_ROBOT_SECRET }}
 
-    - name: Build and tag ${{ inputs.microservice_name }} image 
+    # build locally with --load so Trivy can scan the image before push.
+    # Attestations are not generated here — they come from the push step below.
+    - name: Build ${{ inputs.microservice_name }} image (local, for scan)
       id: build-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: ${{ inputs.microservice_name }}
-        HARBOR_REGISTRY: ${{ vars.harbor_url }}
-        HARBOR_REPOSITORY: ${{ inputs.microservice_name }}
         IMAGE_TAG: "${{ env.new_image_tag }}"
       run: |
-        # Build a docker container
-        echo "Building image.." 
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $HARBOR_REGISTRY/$HARBOR_REPOSITORY:$IMAGE_TAG ${{ inputs.dockerfile_relative_path}}
+        echo "Building image locally for Trivy scan..."
+        docker buildx build \
+          --load \
+          --cache-to=type=gha,mode=max \
+          --cache-from=type=gha \
+          -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+          ${{ inputs.dockerfile_relative_path }}
         echo "CONTAINER_TAG=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
 
     - name: Scan container image
@@ -193,28 +203,30 @@ jobs:
         trivyignores: ${{ inputs.trivyignores }}
         limit-severities-for-sarif: ${{inputs.limit-severities-for-sarif}}
 
-    - name: Push ${{ inputs.microservice_name }} image to Amazon ECR
+    # replaces the two separate `docker push` steps.
+    # buildx re-uses the cached layers from the local build above (near-instant),
+    # then pushes to both registries with an SLSA provenance attestation attached
+    # as an OCI referrer on each. Verify with: docker buildx imagetools inspect.
+    - name: Build & push ${{ inputs.microservice_name }} with SLSA provenance
       if: ${{ !cancelled() }}
       id: push-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: ${{ inputs.microservice_name }}
-        IMAGE_TAG: "${{ env.new_image_tag }}"
-      run: |
-        echo "Pushing image to ECR..."
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-
-    - name: Push ${{ inputs.microservice_name }} image to Harbor
-      if: ${{ !cancelled() }}
-      id: push-image-harbor
-      env:
         HARBOR_REGISTRY: ${{ vars.harbor_url }}
         HARBOR_REPOSITORY: ${{ inputs.microservice_name }}
         IMAGE_TAG: "${{ env.new_image_tag }}"
       run: |
-        echo "Pushing image to Harbor..."
-        docker push $HARBOR_REGISTRY/$HARBOR_REPOSITORY:$IMAGE_TAG
+        echo "Building and pushing image with provenance attestation..."
+        docker buildx build \
+          --push \
+          --provenance=mode=max \
+          --sbom=false \
+          --cache-from=type=gha \
+          -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+          -t $HARBOR_REGISTRY/$HARBOR_REPOSITORY:$IMAGE_TAG \
+          ${{ inputs.dockerfile_relative_path }}
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
         echo "harbor_image=$HARBOR_REGISTRY/$HARBOR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
   create-octopus-release:
